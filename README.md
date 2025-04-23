@@ -5,7 +5,7 @@ A user authentication and verification system using MongoDB, supporting email-ba
 ## Installation
 
 ```
-pip install easy_mongodb_auth_handler
+pip install easy-mongodb-auth-handler
 ```
 
 ## Setup
