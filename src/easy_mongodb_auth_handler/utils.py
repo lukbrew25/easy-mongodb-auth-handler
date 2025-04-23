@@ -1,5 +1,28 @@
 import smtplib
 from email.mime.text import MIMEText
+import bcrypt
+import secrets
+import re
+
+
+def hash_password(password):
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode(), salt)
+    return hashed.decode()
+
+
+def verify_password(password, hashed):
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
+
+def generate_secure_code(length=6):
+    return ''.join(secrets.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(length))
+
+
+def validate_email(email):
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    return re.match(email_regex, email) is not None
+
 
 def send_verification_email(mail_server, mail_port, mail_username, mail_password, recipient_email, verification_code):
     if not all([mail_server, mail_port, mail_username, mail_password]):
