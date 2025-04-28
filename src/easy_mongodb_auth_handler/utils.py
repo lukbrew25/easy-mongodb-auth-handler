@@ -1,8 +1,8 @@
+import secrets
+import re
 import smtplib
 from email.mime.text import MIMEText
 import bcrypt
-import secrets
-import re
 
 
 def hash_password(password):
