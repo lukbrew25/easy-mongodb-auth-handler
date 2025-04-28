@@ -1,3 +1,8 @@
+"""
+Setup script for the easy_mongodb_auth_handler package.
+"""
+
+
 from setuptools import setup, find_packages
 
 

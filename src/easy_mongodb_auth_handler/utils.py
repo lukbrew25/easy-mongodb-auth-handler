@@ -1,3 +1,7 @@
+"""
+Utility functions for the easy_mongodb_auth_handler package.
+"""
+
 import secrets
 import re
 import smtplib
@@ -6,16 +10,44 @@ import bcrypt
 
 
 def hash_password(password):
+    """
+    Hashes a password using bcrypt.
+
+    Args:
+        password (str): The password to hash.
+
+    Returns:
+        str: The hashed password.
+    """
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode(), salt)
     return hashed.decode()
 
 
 def verify_password(password, hashed):
+    """
+    verifies a password against a hashed password
+
+    Args:
+        password (str): The plain text password.
+        hashed (str): The hashed password.
+
+    Returns:
+        bool: True if the password matches, False otherwise.
+    """
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 def generate_secure_code(length=6):
+    """
+    Generates a secure alphanumeric code.
+
+    Args:
+        length (int): The length of the code. Default is 6.
+
+    Returns:
+        str: The generated code.
+    """
     return ''.join(secrets.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(length))
 
 
