@@ -20,11 +20,36 @@ def generate_secure_code(length=6):
 
 
 def validate_email(email):
+    """
+    Validates the format of an email address using a regular expression.
+
+    Args:
+        email (str): The email address to validate.
+
+    Returns:
+        bool: True if the email is valid, False otherwise.
+    """
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(email_regex, email) is not None
 
 
-def send_verification_email(mail_server, mail_port, mail_username, mail_password, recipient_email, verification_code):
+def send_verification_email(mail_info, recipient_email, verification_code):
+    """
+    sends a verification email with a specified code to the recipient
+
+    Args:
+        mail_info (dict): The server address, port, email address, and password.
+        recipient_email (str): The recipient's email address.
+        verification_code (str): The verification code to send.
+
+    Raises:
+        ValueError: If mail server settings are incomplete.
+        RuntimeError: If sending the email fails.
+    """
+    mail_server = mail_info.get("server")
+    mail_port = mail_info.get("port")
+    mail_username = mail_info.get("username")
+    mail_password = mail_info.get("password")
     if not all([mail_server, mail_port, mail_username, mail_password]):
         raise ValueError("Mail server settings are incomplete or missing.")
 
@@ -41,4 +66,4 @@ def send_verification_email(mail_server, mail_port, mail_username, mail_password
             server.login(mail_username, mail_password)
             server.sendmail(mail_username, recipient_email, msg.as_string())
     except Exception as e:
-        raise RuntimeError(f"Failed to send email: {e}")
+        raise RuntimeError(f"Failed to send email: {e}") from e

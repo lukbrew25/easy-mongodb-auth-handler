@@ -11,6 +11,8 @@ class Auth:
         self.mail_port = mail_port
         self.mail_username = mail_username
         self.mail_password = mail_password
+        self.mail_info = {"server": self.mail_server, "port": self.mail_port, "username": self.mail_username,
+                          "password": self.mail_password}
 
     def register_user_no_verif(self, email, password):
         if not validate_email(email):
@@ -52,8 +54,7 @@ class Auth:
             "verified": False,
             "verification_code": verification_code
         })
-        send_verification_email(self.mail_server, self.mail_port, self.mail_username, self.mail_password, email,
-                                verification_code)
+        send_verification_email(self.mail_info, email, verification_code)
         return {"success": True, "message": "User registered. Verification email sent."}
 
 
@@ -96,7 +97,7 @@ class Auth:
             return {"success": False, "message": "User not found."}
         reset_code = generate_secure_code()
         self.users.update_one({"email": email}, {"$set": {"reset_code": reset_code}})
-        send_verification_email(self.mail_server, self.mail_port, self.mail_username, self.mail_password, email, reset_code)
+        send_verification_email(self.mail_info, email, reset_code)
         return {"success": True, "message": "Reset code sent to email."}
 
 
@@ -107,5 +108,6 @@ class Auth:
         if user.get("reset_code") != reset_code:
             return {"success": False, "message": "Invalid reset code."}
         hashed_password = hash_password(new_password)
-        self.users.update_one({"email": email}, {"$set": {"password": hashed_password, "reset_code": None}})
+        self.users.update_one({"email": email}, {"$set": {"password": hashed_password,
+                                                          "reset_code": None}})
         return {"success": True, "message": "Password reset successful."}
