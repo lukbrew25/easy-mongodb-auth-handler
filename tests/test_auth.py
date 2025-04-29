@@ -53,8 +53,11 @@ class TestAuth(unittest.TestCase):
     """Tests for the Auth class."""
 
     def setUp(self):
-        """Set up the test environment."""
+        """Set up the test environment with a mocked MongoDB client."""
+        self.patcher = patch("src.easy_mongodb_auth_handler.auth.MongoClient", autospec=True)
+        self.mock_mongo_client = self.patcher.start()
         self.mock_db = MagicMock()
+        self.mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.auth = Auth(
             "mongodb://localhost:27017",
             "test_db",
@@ -66,32 +69,27 @@ class TestAuth(unittest.TestCase):
             },
         )
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_register_user_no_verif_success(self, mock_mongo_client):
+    def tearDown(self):
+        """Stop the patcher after each test."""
+        self.patcher.stop()
+
+    def test_register_user_no_verif_success(self):
         """Test registering a user without verification (success case)."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = None
         self.mock_db["users"].insert_one.return_value = None
         result = self.auth.register_user_no_verif("test@example.com", "password123")
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "User registered without verification.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_register_user_no_verif_existing_user(self, mock_mongo_client):
+    def test_register_user_no_verif_existing_user(self):
         """Test registering a user without verification (user already exists)."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {"email": "test@example.com"}
         result = self.auth.register_user_no_verif("test@example.com", "password123")
         self.assertFalse(result["success"])
         self.assertEqual(result["message"], "User already exists.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_reset_password_no_verif_success(self, mock_mongo_client):
+    def test_reset_password_no_verif_success(self):
         """Test resetting a password without verification (success case)."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "password": hash_password("oldpassword"),
@@ -102,11 +100,8 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "Password reset successful.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_reset_password_no_verif_invalid_old_password(self, mock_mongo_client):
+    def test_reset_password_no_verif_invalid_old_password(self):
         """Test resetting a password without verification (invalid old password)."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "password": hash_password("oldpassword"),
@@ -117,24 +112,16 @@ class TestAuth(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["message"], "Invalid old password.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    @patch("src.easy_mongodb_auth_handler.utils.smtplib.SMTP")
-    def test_register_user_with_verification(self, mock_smtp, mock_mongo_client):
+    def test_register_user_with_verification(self):
         """Test registering a user with email verification."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = None
         self.mock_db["users"].insert_one.return_value = None
-        mock_smtp.return_value = MagicMock()
         result = self.auth.register_user("test@example.com", "password123")
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "User registered. Verification email sent.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_verify_user_success(self, mock_mongo_client):
+    def test_verify_user_success(self):
         """Test verifying a user with a valid verification code."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "verification_code": "123456",
@@ -143,11 +130,8 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "User verified.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_verify_user_invalid_code(self, mock_mongo_client):
+    def test_verify_user_invalid_code(self):
         """Test verifying a user with an invalid verification code."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "verification_code": "123456",
@@ -156,11 +140,8 @@ class TestAuth(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["message"], "Invalid verification code.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_authenticate_user_success(self, mock_mongo_client):
+    def test_authenticate_user_success(self):
         """Test authenticating a user with valid credentials."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "password": hash_password("password123"),
@@ -170,11 +151,8 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "Authentication successful.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_authenticate_user_invalid_credentials(self, mock_mongo_client):
+    def test_authenticate_user_invalid_credentials(self):
         """Test authenticating a user with invalid credentials."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "password": hash_password("password123"),
@@ -184,11 +162,8 @@ class TestAuth(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["message"], "Invalid credentials.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_delete_user_success(self, mock_mongo_client):
+    def test_delete_user_success(self):
         """Test deleting a user with valid credentials."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "password": hash_password("password123"),
@@ -198,24 +173,16 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "User deleted.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    @patch("src.easy_mongodb_auth_handler.utils.smtplib.SMTP")
-    def test_generate_reset_code_success(self, mock_smtp, mock_mongo_client):
+    def test_generate_reset_code_success(self):
         """Test generating a reset code for a user."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {"email": "test@example.com"}
         self.mock_db["users"].update_one.return_value = None
-        mock_smtp.return_value = MagicMock()
         result = self.auth.generate_reset_code("test@example.com")
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "Reset code sent to email.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_verify_reset_code_and_reset_password_success(self, mock_mongo_client):
+    def test_verify_reset_code_and_reset_password_success(self):
         """Test verifying a reset code and resetting the password (success case)."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "reset_code": "123456",
@@ -227,11 +194,8 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "Password reset successful.")
 
-    @patch("src.easy_mongodb_auth_handler.auth.MongoClient")
-    def test_verify_reset_code_and_reset_password_invalid_code(self, mock_mongo_client):
+    def test_verify_reset_code_and_reset_password_invalid_code(self):
         """Test verifying a reset code and resetting the password (invalid code)."""
-        mock_mongo_client.return_value = MagicMock()
-        mock_mongo_client.return_value.__getitem__.return_value = self.mock_db
         self.mock_db["users"].find_one.return_value = {
             "email": "test@example.com",
             "reset_code": "123456",
