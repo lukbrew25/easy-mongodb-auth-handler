@@ -174,7 +174,9 @@ class TestAuth(unittest.TestCase):
         result = self.auth.generate_reset_code("test@example.com")
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "Reset code sent to email.")
-        mock_send_email.assert_called_once()
+        mock_send_email.assert_called_once_with(
+            self.auth.mail_info, "test@example.com", unittest.mock.ANY
+        )
 
     @patch("src.easy_mongodb_auth_handler.auth.send_verification_email", autospec=True)
     def test_register_user_with_verification(self, mock_send_email):
@@ -185,7 +187,9 @@ class TestAuth(unittest.TestCase):
         result = self.auth.register_user("test@example.com", "password123")
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "User registered. Verification email sent.")
-        mock_send_email.assert_called_once()
+        mock_send_email.assert_called_once_with(
+            self.auth.mail_info, "test@example.com", unittest.mock.ANY
+        )
 
     def test_verify_reset_code_and_reset_password_success(self):
         """Test verifying a reset code and resetting the password (success case)."""
