@@ -112,14 +112,6 @@ class TestAuth(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["message"], "Invalid old password.")
 
-    def test_register_user_with_verification(self):
-        """Test registering a user with email verification."""
-        self.mock_db["users"].find_one.return_value = None
-        self.mock_db["users"].insert_one.return_value = None
-        result = self.auth.register_user("test@example.com", "password123")
-        self.assertTrue(result["success"])
-        self.assertEqual(result["message"], "User registered. Verification email sent.")
-
     def test_verify_user_success(self):
         """Test verifying a user with a valid verification code."""
         self.mock_db["users"].find_one.return_value = {
@@ -173,13 +165,27 @@ class TestAuth(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "User deleted.")
 
-    def test_generate_reset_code_success(self):
+    @patch("src.easy_mongodb_auth_handler.auth.send_verification_email", autospec=True)
+    def test_generate_reset_code_success(self, mock_send_email):
         """Test generating a reset code for a user."""
         self.mock_db["users"].find_one.return_value = {"email": "test@example.com"}
         self.mock_db["users"].update_one.return_value = None
+        mock_send_email.return_value = None  # Mock the email sending
         result = self.auth.generate_reset_code("test@example.com")
         self.assertTrue(result["success"])
         self.assertEqual(result["message"], "Reset code sent to email.")
+        mock_send_email.assert_called_once()
+
+    @patch("src.easy_mongodb_auth_handler.auth.send_verification_email", autospec=True)
+    def test_register_user_with_verification(self, mock_send_email):
+        """Test registering a user with email verification."""
+        self.mock_db["users"].find_one.return_value = None
+        self.mock_db["users"].insert_one.return_value = None
+        mock_send_email.return_value = None  # Mock the email sending
+        result = self.auth.register_user("test@example.com", "password123")
+        self.assertTrue(result["success"])
+        self.assertEqual(result["message"], "User registered. Verification email sent.")
+        mock_send_email.assert_called_once()
 
     def test_verify_reset_code_and_reset_password_success(self):
         """Test verifying a reset code and resetting the password (success case)."""
