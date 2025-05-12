@@ -103,3 +103,5 @@ GNU Affero General Public License v3
 ## Author
 
 Lukbrew25
+
+...and all future contributors!
