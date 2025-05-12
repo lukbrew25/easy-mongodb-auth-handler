@@ -49,7 +49,7 @@ auth = Auth(
 ```
 This code initializes the package. The mail arguments are not required, but needed to use verification code functionality. All methods return True or False with additional detailed outcome reports.
 
-### Function Reference (auth.[func name here])
+### Function Reference - auth.func_name(params)
 ```
 register_user(email, password)
 ```
