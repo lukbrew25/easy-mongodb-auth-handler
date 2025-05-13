@@ -9,6 +9,20 @@ from email.mime.text import MIMEText
 import bcrypt
 
 
+def check_password(user, password):
+    """
+    Helper to verify a user's password.
+
+    Args:
+        user (dict): User document.
+        password (str): Password to verify.
+
+    Returns:
+        bool: True if the password matches, False otherwise.
+    """
+    return verify_password(password, user["password"])
+
+
 def hash_password(password):
     """
     Hashes a password using bcrypt.
