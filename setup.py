@@ -11,7 +11,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="easy_mongodb_auth_handler",
-    version="1.0.2",
+    version="1.0.3",
     description="A user authentication and verification system using MongoDB.",
     author="Lukbrew25",
     long_description=long_description,
