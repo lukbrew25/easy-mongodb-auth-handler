@@ -43,16 +43,20 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        if not validate_email(email):
-            return {"success": False, "message": "Invalid email format."}
-        if self.users.find_one({"email": email}):
-            return {"success": False, "message": "User already exists."}
+        try:
+            if not validate_email(email):
+                return {"success": False, "message": "Invalid email format."}
+            if self.users.find_one({"email": email}):
+                return {"success": False, "message": "User already exists."}
 
-        hashed_password = hash_password(password)
-        self.users.insert_one(
-            {"email": email, "password": hashed_password, "verified": True}
-        )
-        return {"success": True, "message": "User registered without verification."}
+            hashed_password = hash_password(password)
+            self.users.insert_one(
+                {"email": email, "password": hashed_password, "verified": True}
+            )
+            return {"success": True, "message": "User registered without verification."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
+
 
     def reset_password_no_verif(self, email, old_password, new_password):
         """
@@ -66,15 +70,18 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
-        if not user:
-            return {"success": False, "message": "User not found."}
-        if not verify_password(old_password, user["password"]):
-            return {"success": False, "message": "Invalid old password."}
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": "User not found."}
+            if not verify_password(old_password, user["password"]):
+                return {"success": False, "message": "Invalid old password."}
 
-        hashed_password = hash_password(new_password)
-        self.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
-        return {"success": True, "message": "Password reset successful."}
+            hashed_password = hash_password(new_password)
+            self.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
+            return {"success": True, "message": "Password reset successful."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
 
     def register_user(self, email, password):
         """
@@ -87,23 +94,26 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        if not validate_email(email):
-            return {"success": False, "message": "Invalid email format."}
-        if self.users.find_one({"email": email}):
-            return {"success": False, "message": "User already exists."}
+        try:
+            if not validate_email(email):
+                return {"success": False, "message": "Invalid email format."}
+            if self.users.find_one({"email": email}):
+                return {"success": False, "message": "User already exists."}
 
-        hashed_password = hash_password(password)
-        verification_code = generate_secure_code()
-        send_verification_email(self.mail_info, email, verification_code)
-        self.users.insert_one(
-            {
-                "email": email,
-                "password": hashed_password,
-                "verified": False,
-                "verification_code": verification_code,
-            }
-        )
-        return {"success": True, "message": "User registered. Verification email sent."}
+            hashed_password = hash_password(password)
+            verification_code = generate_secure_code()
+            send_verification_email(self.mail_info, email, verification_code)
+            self.users.insert_one(
+                {
+                    "email": email,
+                    "password": hashed_password,
+                    "verified": False,
+                    "verification_code": verification_code,
+                }
+            )
+            return {"success": True, "message": "User registered. Verification email sent."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
 
     def verify_user(self, email, code):
         """
@@ -116,13 +126,16 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
-        if not user:
-            return {"success": False, "message": "User not found."}
-        if user["verification_code"] == code:
-            self.users.update_one({"email": email}, {"$set": {"verified": True}})
-            return {"success": True, "message": "User verified."}
-        return {"success": False, "message": "Invalid verification code."}
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": "User not found."}
+            if user["verification_code"] == code:
+                self.users.update_one({"email": email}, {"$set": {"verified": True}})
+                return {"success": True, "message": "User verified."}
+            return {"success": False, "message": "Invalid verification code."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
 
     def authenticate_user(self, email, password):
         """
@@ -135,14 +148,17 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
-        if not user:
-            return {"success": False, "message": "User not found."}
-        if not user["verified"]:
-            return {"success": False, "message": "User not verified."}
-        if verify_password(password, user["password"]):
-            return {"success": True, "message": "Authentication successful."}
-        return {"success": False, "message": "Invalid credentials."}
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": "User not found."}
+            if not user["verified"]:
+                return {"success": False, "message": "User not verified."}
+            if verify_password(password, user["password"]):
+                return {"success": True, "message": "Authentication successful."}
+            return {"success": False, "message": "Invalid credentials."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
 
     def delete_user(self, email, password):
         """
@@ -155,16 +171,19 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
-        if not user:
-            return {"success": False, "message": "User not found."}
-        if not verify_password(password, user["password"]):
-            return {"success": False, "message": "Invalid password."}
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": "User not found."}
+            if not verify_password(password, user["password"]):
+                return {"success": False, "message": "Invalid password."}
 
-        result = self.users.delete_one({"email": email})
-        if result.deleted_count > 0:
-            return {"success": True, "message": "User deleted."}
-        return {"success": False, "message": "Failed to delete user."}
+            result = self.users.delete_one({"email": email})
+            if result.deleted_count > 0:
+                return {"success": True, "message": "User deleted."}
+            return {"success": False, "message": "Failed to delete user."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
 
     def generate_reset_code(self, email):
         """
@@ -176,14 +195,17 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
-        if not user:
-            return {"success": False, "message": "User not found."}
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": "User not found."}
 
-        reset_code = generate_secure_code()
-        self.users.update_one({"email": email}, {"$set": {"reset_code": reset_code}})
-        send_verification_email(self.mail_info, email, reset_code)
-        return {"success": True, "message": "Reset code sent to email."}
+            reset_code = generate_secure_code()
+            self.users.update_one({"email": email}, {"$set": {"reset_code": reset_code}})
+            send_verification_email(self.mail_info, email, reset_code)
+            return {"success": True, "message": "Reset code sent to email."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
 
     def verify_reset_code_and_reset_password(self, email, reset_code, new_password):
         """
@@ -197,14 +219,17 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
-        if not user:
-            return {"success": False, "message": "User not found."}
-        if user.get("reset_code") != reset_code:
-            return {"success": False, "message": "Invalid reset code."}
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": "User not found."}
+            if user.get("reset_code") != reset_code:
+                return {"success": False, "message": "Invalid reset code."}
 
-        hashed_password = hash_password(new_password)
-        self.users.update_one(
-            {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
-        )
-        return {"success": True, "message": "Password reset successful."}
+            hashed_password = hash_password(new_password)
+            self.users.update_one(
+                {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
+            )
+            return {"success": True, "message": "Password reset successful."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
