@@ -50,6 +50,9 @@ auth = Auth(
 This code initializes the package. The mail arguments are not required, but needed to use verification code functionality. All methods return True or False with additional detailed outcome reports.
 
 ### Function Reference - auth.func_name(params)
+
+All following functions return a dictionary with the following values: {"success": True/False Boolean, "message": "specific error or success message string"}.
+
 ```
 register_user(email, password)
 ```
