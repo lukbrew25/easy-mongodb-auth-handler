@@ -226,20 +226,24 @@ class Auth:
         """
         try:
             user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
             if not user:
                 return {"success": False, "message": "User not found."}
             if not check_password(user, password):
                 return {"success": False, "message": "Invalid password."}
             result = self.users.delete_one({"email": email})
-            if del_from_blocking:
-                block_result = self.blocked.delete_one({"email": email})
-                if block_result.deleted_count == 0:
-                    if result.deleted_count == 0:
-                        return {"success": False, "message":
-                            "Failed to delete user "
-                            "from all databases."}
-                    else:
-                        return {"success": False, "message": "User deleted but not from blocked database."}
+            if blocked_user:
+                if del_from_blocking:
+                    block_result = self.blocked.delete_one({"email": email})
+                    if block_result.deleted_count == 0:
+                        if result.deleted_count == 0:
+                            return {"success": False, "message":
+                                "Failed to delete user "
+                                "from all databases."}
+                        else:
+                            return {"success": False, "message": "User deleted but not from blocked database."}
+                elif not blocked_user["blocked"]:
+                    self.blocked.delete_one({"email": email})
             if result.deleted_count > 0:
                 return {"success": True, "message": "User deleted."}
             return {"success": False, "message": "Failed to delete user."}
