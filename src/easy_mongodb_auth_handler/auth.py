@@ -173,7 +173,7 @@ class Auth:
             if blocking:
                 if not blocked_user:
                     return {"success": False, "message": "User is not found in blocked database."}
-                elif blocked_user["blocked"]:
+                if blocked_user["blocked"]:
                     return {"success": False, "message": "User is blocked."}
             if user["verification_code"] == code:
                 self.users.update_one({"email": email}, {"$set": {"verified": True}})
@@ -182,7 +182,7 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def authenticate_user(self, email, password, blocking=True):
+    def authenticate_user(self, email, password, blocking=True): # pylint: disable=too-many-return-statements
         """
         authenticates a user
 
@@ -202,7 +202,7 @@ class Auth:
             if blocking:
                 if not blocked_user:
                     return {"success": False, "message": "User is not found in blocked database."}
-                elif blocked_user["blocked"]:
+                if blocked_user["blocked"]:
                     return {"success": False, "message": "User is blocked."}
             if not user["verified"]:
                 return {"success": False, "message": "User not verified."}
@@ -212,7 +212,7 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def delete_user(self, email, password, del_from_blocking=True):
+    def delete_user(self, email, password, del_from_blocking=True): # pylint: disable=too-many-return-statements
         """
         deletes a user account
 
@@ -240,8 +240,8 @@ class Auth:
                             return {"success": False, "message":
                                 "Failed to delete user "
                                 "from all databases."}
-                        else:
-                            return {"success": False, "message": "User deleted but not from blocked database."}
+                        return {"success": False, "message": "User deleted but "
+                                                             "not from blocked database."}
                 elif not blocked_user["blocked"]:
                     self.blocked.delete_one({"email": email})
             if result.deleted_count > 0:
