@@ -54,29 +54,29 @@ This code initializes the package. The mail arguments are not required, but need
 All following functions return a dictionary with the following values: {"success": True/False Boolean, "message": "specific error or success message string"}.
 
 ```
-register_user(email, password)
+register_user(email, password, blocking=True)
 ```
-Registers a user and sends a verification code via email. Returns a success status and message.
+Registers a user and sends a verification code via email. Returns a success status and message. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to register if they are blocked.
 
 ```
-verify_user(email, code)
+verify_user(email, code, blocking=True)
 ```
-Verifies a user by checking the provided verification code against the database entry.
+Verifies a user by checking the provided verification code against the database entry. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to verify if they are blocked.
 
 ```
-authenticate_user(email, password)
+authenticate_user(email, password, blocking=True)
 ```
-Authenticates a user by checking their email and password. Requires the user to be verified.
+Authenticates a user by checking their email and password. Requires the user to be verified. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to authenticate if they are blocked.
 
 ```
-delete_user(email, password) 
+delete_user(email, password, del_from_blocking=True) 
 ```
-Deletes a user from the database if credentials match.
+Deletes a user from the database if credentials match. del_from_blocking is a boolean that determines if the user should be removed from the blocking database if they are currently blocked. If set to true, the entry will be deleted and the user will no longer be blocked. It is optional but set to True by default.
 
 ```
-register_user_no_verif(email, password)  
+register_user_no_verif(email, password, blocking=True)  
 ```
-Registers a user without requiring email verification. Useful for internal tools or test environments.
+Registers a user without requiring email verification. Useful for internal tools or test environments. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to register if they are blocked.
 
 ```
 reset_password_no_verif(email, old_password, new_password)
@@ -92,6 +92,11 @@ Generates and emails a password reset code to the user.
 verify_reset_code_and_reset_password(email, reset_code, new_password)  
 ```
 Verifies a password reset code and resets the user's password.
+
+```
+block_user(email)
+```
+Blocks a user by setting their status to "blocked" in the database. This prevents login attempts and most functions.
 
 ## Requirements
 
