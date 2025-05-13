@@ -94,6 +94,7 @@ class Auth:
 
         hashed_password = hash_password(password)
         verification_code = generate_secure_code()
+        send_verification_email(self.mail_info, email, verification_code)
         self.users.insert_one(
             {
                 "email": email,
@@ -102,7 +103,6 @@ class Auth:
                 "verification_code": verification_code,
             }
         )
-        send_verification_email(self.mail_info, email, verification_code)
         return {"success": True, "message": "User registered. Verification email sent."}
 
     def verify_user(self, email, code):
