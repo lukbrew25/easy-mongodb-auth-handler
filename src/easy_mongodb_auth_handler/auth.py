@@ -2,6 +2,10 @@
 Authentication and user management for the easy_mongodb_auth_handler package.
 """
 
+#pylint: disable=inconsistent-return-statements
+#pylint: disable=trailing-whitespace
+
+
 from pymongo import MongoClient
 from .utils import (
     validate_email,
@@ -32,13 +36,14 @@ class Auth:
         self.users = self.db["users"]
         self.mail_info = mail_info or {}
 
-    def register_user_no_verif(self, email, password):
+    def register_user_no_verif(self, email, password, custom_data=False):
         """
         registers a user without email verification
 
         Args:
             email (str): User's email address.
             password (str): User's password.
+            custom_data: Custom data to save with the user. 
 
         Returns:
             dict: Success status and message.
@@ -50,7 +55,8 @@ class Auth:
 
         hashed_password = hash_password(password)
         self.users.insert_one(
-            {"email": email, "password": hashed_password, "verified": True}
+            {"email": email, "password": hashed_password, "verified": True, 
+             "custom_data": custom_data}
         )
         return {"success": True, "message": "User registered without verification."}
 
@@ -76,13 +82,14 @@ class Auth:
         self.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
         return {"success": True, "message": "Password reset successful."}
 
-    def register_user(self, email, password):
+    def register_user(self, email, password, custom_data=False):
         """
         registers a user with email verification
 
         Args:
             email (str): User's email address.
             password (str): User's password.
+            custom_data: Custom data to save with the user.
 
         Returns:
             dict: Success status and message.
@@ -100,6 +107,7 @@ class Auth:
                 "password": hashed_password,
                 "verified": False,
                 "verification_code": verification_code,
+                "custom_data": custom_data
             }
         )
         send_verification_email(self.mail_info, email, verification_code)
@@ -208,3 +216,79 @@ class Auth:
             {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
         )
         return {"success": True, "message": "Password reset successful."}
+    
+    def get_cust_usr_data(self, email):
+        """
+        retrieves custom user data
+        Args:
+            email (str): User's email address.
+        Returns:
+            dict: Success status and message.
+        """
+
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+        custom_data = user.get("custom_data")
+        if custom_data:
+            return {"success": True, "message": custom_data}     
+        
+    def get_some_cust_usr_data(self, email, request):
+        """
+        retrieves specific custom user data
+        Args:
+            email (str): User's email address.
+            request (str): Specific field to retrieve.
+        Returns:
+            dict: Success status and message.
+        """
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+        custom_data = user.get("custom_data").get(request)
+        if custom_data:
+            return {"success": True, "message": custom_data} 
+
+    def replace_usr_data(self, email, custom_data):
+        """
+        replaces custom user data
+        Args:
+            email (str): User's email address.
+            custom_data: New custom data to save with the user.
+        Returns:
+            dict: Success status and message.
+        """
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+        
+        self.users.update_one(
+            {"email": email}, {"$set": {"custom_data": custom_data}}
+        )
+        return {"success": True, "message": "Custom user data changed."}
+
+    def update_usr_data(self, email, field, custom_data):
+        """
+        updates a specific field in the custom user data
+        Args:
+            email (str): User's email address.
+            field (str): Field to update.
+            custom_data: New value for the field.
+        Returns:
+            dict: Success status and message.
+        """
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+        
+        if not user.get("custom_data").get(field):
+            return {"success": False, "message": "Field not found."}
+
+        self.users.update_one(
+            {"email": email}, {"$set": {f"custom_data.{field}": custom_data}}
+        )
+        return {"success": True, "message": "Custom user data field updated."}
