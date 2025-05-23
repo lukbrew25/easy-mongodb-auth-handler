@@ -90,6 +90,26 @@ verify_reset_code_and_reset_password(email, reset_code, new_password)
 ```
 Verifies a password reset code and resets the user's password.
 
+```
+get_cust_usr_data(email)
+```
+Retrieves the entire custom data dictionary for a user.
+
+```
+get_some_cust_usr_data(email, field)
+```
+Retrieves a specific field from the user's custom data.
+
+```
+replace_usr_data(email, custom_data)
+```
+Replaces the entire custom data dictionary for a user.
+
+```
+update_usr_data(email, field, custom_data)
+```
+Updates a specific field in the user's custom data.
+
 ## Requirements
 
 - Python >= 3.8
