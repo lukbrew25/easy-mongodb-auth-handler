@@ -234,12 +234,12 @@ class Auth:
         if custom_data:
             return {"success": True, "message": custom_data}     
         
-    def get_some_cust_usr_data(self, email, request):
+    def get_some_cust_usr_data(self, email, field):
         """
         retrieves specific custom user data
         Args:
             email (str): User's email address.
-            request (str): Specific field to retrieve.
+            field (str): Specific field to retrieve.
         Returns:
             dict: Success status and message.
         """
@@ -247,7 +247,7 @@ class Auth:
 
         if not user:
             return {"success": False, "message": "User not found."}
-        custom_data = user.get("custom_data").get(request)
+        custom_data = user.get("custom_data").get(field)
         if custom_data:
             return {"success": True, "message": custom_data} 
 
