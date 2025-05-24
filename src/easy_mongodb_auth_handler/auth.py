@@ -14,6 +14,7 @@ from .utils import (
 
 #pylint: disable=inconsistent-return-statements
 #pylint: disable=trailing-whitespace
+#pylint: disable=too-many-return-statements
 
 
 class Auth:
@@ -191,7 +192,7 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def authenticate_user(self, email, password): # pylint: disable=too-many-return-statements
+    def authenticate_user(self, email, password):
         """
         authenticates a user
 
@@ -220,7 +221,7 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def delete_user(self, email, password, del_from_blocking=True): # pylint: disable=too-many-return-statements
+    def delete_user(self, email, password, del_from_blocking=True):
         """
         deletes a user account
 
