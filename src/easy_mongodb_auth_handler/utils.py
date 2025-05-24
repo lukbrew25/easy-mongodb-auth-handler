@@ -1,5 +1,5 @@
 """
-Utility functions for the easy-mongodb-auth-handler package.
+Utility functions for the easy_mongodb_auth_handler package.
 """
 
 import secrets

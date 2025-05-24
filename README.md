@@ -1,4 +1,4 @@
-# easy-mongodb-auth-handler
+# easy_mongodb_auth_handler
 
 A user authentication and verification system using MongoDB, supporting email-based verification, password hashing, and reset mechanisms.
 
@@ -15,10 +15,10 @@ Make sure you have MongoDB installed and running. You also need access to an SMT
 ## Project Structure
 
 ```
-easy-mongodb-auth-handler/
+easy_mongodb_auth_handler/
 ├── setup.py
 ├── src/
-│   └── easy-mongodb-auth-handler/
+│   └── easy_mongodb_auth_handler/
 │       ├── __init__.py
 │       ├── auth.py
 │       └── utils.py
@@ -36,7 +36,7 @@ easy-mongodb-auth-handler/
 ## Usage
 
 ```
-from easy-mongodb-auth-handler import Auth
+from easy_mongodb_auth_handler import Auth
 
 auth = Auth(
     mongo_uri="mongodb://localhost:27017",

@@ -1,5 +1,5 @@
 """
-Authentication and user management for the easy-mongodb-auth-handler package.
+Authentication and user management for the easy_mongodb_auth_handler package.
 """
 
 from pymongo import MongoClient
