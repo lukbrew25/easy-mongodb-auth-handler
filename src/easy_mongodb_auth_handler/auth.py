@@ -15,6 +15,7 @@ from .utils import (
 #pylint: disable=inconsistent-return-statements
 #pylint: disable=trailing-whitespace
 #pylint: disable=too-many-return-statements
+#pylint: disable=broad-except
 
 
 class Auth:
@@ -97,7 +98,7 @@ class Auth:
                 }
             )
             return {"success": True, "message": "User registered without verification."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def reset_password_no_verif(self, email, old_password, new_password):
@@ -121,7 +122,7 @@ class Auth:
             hashed_password = hash_password(new_password)
             self.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
             return {"success": True, "message": "Password reset successful."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def register_user(self, email, password, custom_data=False):
@@ -161,7 +162,7 @@ class Auth:
                 }
             )
             return {"success": True, "message": "User registered. Verification email sent."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def verify_user(self, email, code):
@@ -189,7 +190,7 @@ class Auth:
                 self.users.update_one({"email": email}, {"$set": {"verified": True}})
                 return {"success": True, "message": "User verified."}
             return {"success": False, "message": "Invalid verification code."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def authenticate_user(self, email, password):
@@ -218,7 +219,7 @@ class Auth:
             if check_password(user, password):
                 return {"success": True, "message": "Authentication successful."}
             return {"success": False, "message": "Invalid credentials."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def delete_user(self, email, password, del_from_blocking=True):
@@ -256,7 +257,7 @@ class Auth:
             if result.deleted_count > 0:
                 return {"success": True, "message": "User deleted."}
             return {"success": False, "message": "Failed to delete user."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def generate_reset_code(self, email):
@@ -278,7 +279,7 @@ class Auth:
             self.users.update_one({"email": email}, {"$set": {"reset_code": reset_code}})
             send_verification_email(self.mail_info, email, reset_code)
             return {"success": True, "message": "Reset code sent to email."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def verify_reset_code_and_reset_password(self, email, reset_code, new_password):
@@ -305,7 +306,7 @@ class Auth:
                 {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
             )
             return {"success": True, "message": "Password reset successful."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def block_user(self, email):
@@ -325,7 +326,7 @@ class Auth:
                 return {"success": False, "message": "User not found."}
             self.blocked.update_one({"email": email}, {"$set": {"blocked": True}})
             return {"success": True, "message": "User blocked."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def unblock_user(self, email):
@@ -345,7 +346,48 @@ class Auth:
                 return {"success": False, "message": "User not found."}
             self.blocked.update_one({"email": email}, {"$set": {"blocked": False}})
             return {"success": True, "message": "User unblocked."}
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def is_blocked(self, email):
+        """
+        Checks if a user is blocked.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
+            if not user or not blocked_user:
+                return {"success": False, "message": "User not found."}
+            if blocked_user["blocked"]:
+                return {"success": True, "message": "User is blocked."}
+            return {"success": False, "message": "User is not blocked."}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def is_verified(self, email):
+        """
+        Checks if a user is verified.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            if not user:
+                return {"success": False, "message": "User not found."}
+            if user["verified"]:
+                return {"success": True, "message": "User is verified."}
+            return {"success": False, "message": "User is not verified."}
+        except Exception as error:
             return {"success": False, "message": str(error)}
 
     def get_cust_usr_data(self, email):
@@ -356,15 +398,17 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
+        try:
+            user = self.users.find_one({"email": email})
 
-        user = self.users.find_one({"email": email})
-
-        if not user:
-            return {"success": False, "message": "User not found."}
-        custom_data = user.get("custom_data")
-        if custom_data:
-            return {"success": True, "message": custom_data}
-        return {"success": True, "message": "No data found."}
+            if not user:
+                return {"success": False, "message": "User not found."}
+            custom_data = user.get("custom_data")
+            if custom_data:
+                return {"success": True, "message": custom_data}
+            return {"success": True, "message": "No data found."}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
     def get_some_cust_usr_data(self, email, field):
         """
@@ -375,14 +419,17 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
+        try:
+            user = self.users.find_one({"email": email})
 
-        if not user:
-            return {"success": False, "message": "User not found."}
-        custom_data = user.get("custom_data").get(field)
-        if custom_data:
-            return {"success": True, "message": custom_data}
-        return {"success": True, "message": "No data found."}
+            if not user:
+                return {"success": False, "message": "User not found."}
+            custom_data = user.get("custom_data").get(field)
+            if custom_data:
+                return {"success": True, "message": custom_data}
+            return {"success": True, "message": "No data found."}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
     def replace_usr_data(self, email, custom_data):
         """
@@ -393,15 +440,18 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
+        try:
+            user = self.users.find_one({"email": email})
 
-        if not user:
-            return {"success": False, "message": "User not found."}
+            if not user:
+                return {"success": False, "message": "User not found."}
 
-        self.users.update_one(
-            {"email": email}, {"$set": {"custom_data": custom_data}}
-        )
-        return {"success": True, "message": "Custom user data changed."}
+            self.users.update_one(
+                {"email": email}, {"$set": {"custom_data": custom_data}}
+            )
+            return {"success": True, "message": "Custom user data changed."}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
     def update_usr_data(self, email, field, custom_data):
         """
@@ -413,15 +463,18 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
-        user = self.users.find_one({"email": email})
+        try:
+            user = self.users.find_one({"email": email})
 
-        if not user:
-            return {"success": False, "message": "User not found."}
+            if not user:
+                return {"success": False, "message": "User not found."}
 
-        if not user.get("custom_data").get(field):
-            return {"success": False, "message": "Field not found."}
+            if not user.get("custom_data").get(field):
+                return {"success": False, "message": "Field not found."}
 
-        self.users.update_one(
-            {"email": email}, {"$set": {f"custom_data.{field}": custom_data}}
-        )
-        return {"success": True, "message": "Custom user data field updated."}
+            self.users.update_one(
+                {"email": email}, {"$set": {f"custom_data.{field}": custom_data}}
+            )
+            return {"success": True, "message": "Custom user data field updated."}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
