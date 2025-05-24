@@ -40,63 +40,73 @@ from easy_mongodb_auth_handler import Auth
 
 auth = Auth(
     mongo_uri="mongodb://localhost:27017",
-    db_name="myapp",
-    mail_server="smtp.example.com",
-    mail_port=587,
-    mail_username="your_email@example.com",
-    mail_password="your_email_password"
+    db_name="mydb",
+    mail_info={
+        mail_server="smtp.example.com",
+        mail_port=587,
+        mail_username="your_email@example.com",
+        mail_password="your_email_password"
+    }, # Optional: Include if using email verification
+    blocking=True/False  # Optional: True to enable user blocking
 )
 ```
 This code initializes the package. The mail arguments are not required, but needed to use verification code functionality. All methods return True or False with additional detailed outcome reports.
 
-### Function Reference - auth.func_name(params)
+## Function Reference - auth.example_func(args)
 
-All following functions return a dictionary with the following values: {"success": True/False Boolean, "message": "specific error or success message string"}.
+All functions return a dictionary: `{"success": True/False, "message": "specific message"}`.
 
-```
-register_user(email, password, blocking=True)
-```
-Registers a user and sends a verification code via email. Returns a success status and message. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to register if they are blocked.
+### User Registration & Verification
 
-```
-verify_user(email, code, blocking=True)
-```
-Verifies a user by checking the provided verification code against the database entry. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to verify if they are blocked.
+- `register_user(email, password, custom_data=False)`
+  - Registers a user and sends a verification code via email. `custom_data` can be any additional user info.
 
-```
-authenticate_user(email, password, blocking=True)
-```
-Authenticates a user by checking their email and password. Requires the user to be verified. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to authenticate if they are blocked.
+- `register_user_no_verif(email, password, custom_data=False)`
+  - Registers a user without email verification. `custom_data` is optional.
 
-```
-delete_user(email, password, del_from_blocking=True) 
-```
-Deletes a user from the database if credentials match. del_from_blocking is a boolean that determines if the user should be removed from the blocking database if they are currently blocked. If set to true, the entry will be deleted and the user will no longer be blocked. It is optional but set to True by default.
+- `verify_user(email, code)`
+  - Verifies a user by checking the provided verification code.
 
-```
-register_user_no_verif(email, password, blocking=True)  
-```
-Registers a user without requiring email verification. Useful for internal tools or test environments. Blocking is an optional parameter that is set to True by default. When blocking is set to True, the user will not be allowed to register if they are blocked.
+### Authentication
 
-```
-reset_password_no_verif(email, old_password, new_password)
-```
-Resets the user's password after verifying the old password. Does not require an email code.
+- `authenticate_user(email, password)`
+  - Authenticates a user. Requires the user to be verified.
 
-```
-generate_reset_code(email)
-```
-Generates and emails a password reset code to the user.
+### Password Management
 
-```
-verify_reset_code_and_reset_password(email, reset_code, new_password)  
-```
-Verifies a password reset code and resets the user's password.
+- `reset_password_no_verif(email, old_password, new_password)`
+  - Resets the user's password after verifying the old password. No email code required.
 
-```
-block_user(email)
-```
-Blocks a user by setting their status to "blocked" in the database. This prevents login attempts and most functions.
+- `generate_reset_code(email)`
+  - Generates and emails a password reset code to the user.
+
+- `verify_reset_code_and_reset_password(email, reset_code, new_password)`
+  - Verifies a password reset code and resets the user's password.
+
+### User Deletion & Blocking
+
+- `delete_user(email, password, del_from_blocking=True)`
+  - Deletes a user from the database if credentials match. If `del_from_blocking` is `True`, also removes from the blocking database.
+
+- `block_user(email)`
+  - Blocks a user by setting their status to "blocked".
+
+- `unblock_user(email)`
+  - Unblocks a user.
+
+### Custom User Data
+
+- `get_cust_usr_data(email)`
+  - Retrieves all custom user data for the user.
+
+- `get_some_cust_usr_data(email, field)`
+  - Retrieves a specific field from the user's custom data.
+
+- `replace_usr_data(email, custom_data)`
+  - Replaces the user's custom data with new data.
+
+- `update_usr_data(email, field, custom_data)`
+  - Updates a specific field in the user's custom data.
 
 ## Requirements
 
