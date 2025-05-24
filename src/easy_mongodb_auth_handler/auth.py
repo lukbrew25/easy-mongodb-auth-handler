@@ -40,6 +40,36 @@ class Auth:
         self.blocked = self.db["blocked"]
         self.mail_info = mail_info or {}
         self.blocking = blocking
+        self.messages = {
+            "success": "Success",
+            "error": "Error",
+            "user_not_found": "User not found.",
+            "invalid_email": "Invalid email format.",
+            "user_exists": "User already exists.",
+            "user_blocked": "User is blocked.",
+            "verification_code_sent": "Verification email sent.",
+            "user_verified": "User verified.",
+            "authentication_success": "Authentication successful.",
+            "password_reset_success": "Password reset successful.",
+            "user_deleted": "User deleted.",
+            "user_not_deleted": "Failed to delete user.",
+            "data_updated": "Custom user data field updated.",
+            "data_not_found": "No data found.",
+            "field_not_found": "Field not found.",
+            "data_changed": "Custom user data changed.",
+            "not_blocked": "User is not blocked.",
+            "not_verified": "User is not verified.",
+            "user_unblocked": "User unblocked.",
+            "invalid_reset": "Invalid code.",
+            "not_deleted_blocked": "User deleted but not from blocked database.",
+            "not_deleted": "Failed to delete user.",
+            "not_deleted_all": "Failed to delete user from all databases.",
+            "invalid_old_pass": "Invalid old password.",
+            "invalid_pass": "Invalid password.",
+            "invalid_creds": "Invalid credentials.",
+            "not_found_blocked": "User is not found in blocked database.",
+            "registered_no_verif": "User registered without verification."
+        }
 
     def _find_user(self, email):
         """
@@ -79,14 +109,14 @@ class Auth:
         """
         try:
             if not validate_email(email):
-                return {"success": False, "message": "Invalid email format."}
+                return {"success": False, "message": self.messages["invalid_email"]}
             if self._find_user(email):
-                return {"success": False, "message": "User already exists."}
+                return {"success": False, "message": self.messages["user_exists"]}
             if self.blocking:
                 blocked_user = self._find_blocked_user(email)
                 if blocked_user:
                     if blocked_user["blocked"]:
-                        return {"success": False, "message": "User is blocked."}
+                        return {"success": False, "message": self.messages["user_blocked"]}
             hashed_password = hash_password(password)
             self.users.insert_one(
                 {
@@ -97,7 +127,7 @@ class Auth:
                     "custom_data": custom_data
                 }
             )
-            return {"success": True, "message": "User registered without verification."}
+            return {"success": True, "message": self.messages["registered_no_verif"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -116,12 +146,12 @@ class Auth:
         try:
             user = self._find_user(email)
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if not check_password(user, old_password):
-                return {"success": False, "message": "Invalid old password."}
+                return {"success": False, "message": self.messages["invalid_old_pass"]}
             hashed_password = hash_password(new_password)
             self.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
-            return {"success": True, "message": "Password reset successful."}
+            return {"success": True, "message": self.messages["password_reset_success"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -139,15 +169,15 @@ class Auth:
         """
         try:
             if not validate_email(email):
-                return {"success": False, "message": "Invalid email format."}
+                return {"success": False, "message": self.messages["invalid_email"]}
             if self.users.find_one({"email": email}):
-                return {"success": False, "message": "User already exists."}
+                return {"success": False, "message": self.messages["user_exists"]}
 
             if self.blocking:
                 blocked_user = self._find_blocked_user(email)
                 if blocked_user:
                     if blocked_user["blocked"]:
-                        return {"success": False, "message": "User is blocked."}
+                        return {"success": False, "message": self.messages["user_blocked"]}
             hashed_password = hash_password(password)
             verification_code = generate_secure_code()
             send_verification_email(self.mail_info, email, verification_code)
@@ -161,7 +191,7 @@ class Auth:
                     "custom_data": custom_data,
                 }
             )
-            return {"success": True, "message": "User registered. Verification email sent."}
+            return {"success": True, "message": self.messages["verification_code_sent"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -180,16 +210,16 @@ class Auth:
             user = self.users.find_one({"email": email})
             blocked_user = self._find_blocked_user(email)
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if self.blocking:
                 if not blocked_user:
-                    return {"success": False, "message": "User is not found in blocked database."}
+                    return {"success": False, "message": self.messages["not_found_blocked"]}
                 if blocked_user["blocked"]:
-                    return {"success": False, "message": "User is blocked."}
+                    return {"success": False, "message": self.messages["user_blocked"]}
             if user["verification_code"] == code:
                 self.users.update_one({"email": email}, {"$set": {"verified": True}})
-                return {"success": True, "message": "User verified."}
-            return {"success": False, "message": "Invalid verification code."}
+                return {"success": True, "message": self.messages["user_verified"]}
+            return {"success": False, "message": self.messages["invalid_reset"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -208,17 +238,17 @@ class Auth:
             user = self._find_user(email)
             blocked_user = self._find_blocked_user(email)
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if self.blocking:
                 if not blocked_user:
-                    return {"success": False, "message": "User is not found in blocked database."}
+                    return {"success": False, "message": self.messages["not_found_blocked"]}
                 if blocked_user["blocked"]:
-                    return {"success": False, "message": "User is blocked."}
+                    return {"success": False, "message": self.messages["user_blocked"]}
             if not user["verified"]:
-                return {"success": False, "message": "User not verified."}
+                return {"success": False, "message": self.messages["not_verified"]}
             if check_password(user, password):
-                return {"success": True, "message": "Authentication successful."}
-            return {"success": False, "message": "Invalid credentials."}
+                return {"success": True, "message": self.messages["authentication_success"]}
+            return {"success": False, "message": self.messages["invalid_creds"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -238,25 +268,22 @@ class Auth:
             user = self._find_user(email)
             blocked_user = self._find_blocked_user(email)
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if not check_password(user, password):
-                return {"success": False, "message": "Invalid password."}
+                return {"success": False, "message": self.messages["invalid_pass"]}
             result = self.users.delete_one({"email": email})
             if blocked_user:
                 if del_from_blocking:
                     block_result = self.blocked.delete_one({"email": email})
                     if block_result.deleted_count == 0:
                         if result.deleted_count == 0:
-                            return {"success": False, "message":
-                                "Failed to delete user "
-                                "from all databases."}
-                        return {"success": False, "message": "User deleted but "
-                                                             "not from blocked database."}
+                            return {"success": False, "message": self.messages["not_deleted_all"]}
+                        return {"success": False, "message": self.messages["not_deleted_blocked"]}
                 elif not blocked_user["blocked"]:
                     self.blocked.delete_one({"email": email})
             if result.deleted_count > 0:
-                return {"success": True, "message": "User deleted."}
-            return {"success": False, "message": "Failed to delete user."}
+                return {"success": True, "message": self.messages["user_deleted"]}
+            return {"success": False, "message": self.messages["user_not_deleted"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -273,12 +300,12 @@ class Auth:
         try:
             user = self.users.find_one({"email": email})
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
 
             reset_code = generate_secure_code()
             self.users.update_one({"email": email}, {"$set": {"reset_code": reset_code}})
             send_verification_email(self.mail_info, email, reset_code)
-            return {"success": True, "message": "Reset code sent to email."}
+            return {"success": True, "message": self.messages["verification_code_sent"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -297,15 +324,15 @@ class Auth:
         try:
             user = self.users.find_one({"email": email})
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if user.get("reset_code") != reset_code:
-                return {"success": False, "message": "Invalid reset code."}
+                return {"success": False, "message": self.messages["invalid_reset"]}
 
             hashed_password = hash_password(new_password)
             self.users.update_one(
                 {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
             )
-            return {"success": True, "message": "Password reset successful."}
+            return {"success": True, "message": self.messages["password_reset_success"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -323,9 +350,9 @@ class Auth:
             user = self._find_user(email)
             blocked_user = self._find_blocked_user(email)
             if not user or not blocked_user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             self.blocked.update_one({"email": email}, {"$set": {"blocked": True}})
-            return {"success": True, "message": "User blocked."}
+            return {"success": True, "message": self.messages["user_blocked"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -343,9 +370,9 @@ class Auth:
             user = self._find_user(email)
             blocked_user = self._find_blocked_user(email)
             if not user or not blocked_user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             self.blocked.update_one({"email": email}, {"$set": {"blocked": False}})
-            return {"success": True, "message": "User unblocked."}
+            return {"success": True, "message": self.messages["user_unblocked"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -363,10 +390,10 @@ class Auth:
             user = self._find_user(email)
             blocked_user = self._find_blocked_user(email)
             if not user or not blocked_user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if blocked_user["blocked"]:
-                return {"success": True, "message": "User is blocked."}
-            return {"success": False, "message": "User is not blocked."}
+                return {"success": True, "message": self.messages["user_blocked"]}
+            return {"success": False, "message": self.messages["not_blocked"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -383,10 +410,10 @@ class Auth:
         try:
             user = self._find_user(email)
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             if user["verified"]:
-                return {"success": True, "message": "User is verified."}
-            return {"success": False, "message": "User is not verified."}
+                return {"success": True, "message": self.messages["user_verified"]}
+            return {"success": False, "message": self.messages["not_verified"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -402,11 +429,11 @@ class Auth:
             user = self.users.find_one({"email": email})
 
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             custom_data = user.get("custom_data")
             if custom_data:
                 return {"success": True, "message": custom_data}
-            return {"success": True, "message": "No data found."}
+            return {"success": True, "message": self.messages["data_not_found"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -423,11 +450,11 @@ class Auth:
             user = self.users.find_one({"email": email})
 
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
             custom_data = user.get("custom_data").get(field)
             if custom_data:
                 return {"success": True, "message": custom_data}
-            return {"success": True, "message": "No data found."}
+            return {"success": True, "message": self.messages["data_not_found"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -444,12 +471,12 @@ class Auth:
             user = self.users.find_one({"email": email})
 
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
 
             self.users.update_one(
                 {"email": email}, {"$set": {"custom_data": custom_data}}
             )
-            return {"success": True, "message": "Custom user data changed."}
+            return {"success": True, "message": self.messages["data_changed"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -467,14 +494,14 @@ class Auth:
             user = self.users.find_one({"email": email})
 
             if not user:
-                return {"success": False, "message": "User not found."}
+                return {"success": False, "message": self.messages["user_not_found"]}
 
             if not user.get("custom_data").get(field):
-                return {"success": False, "message": "Field not found."}
+                return {"success": False, "message": self.messages["field_not_found"]}
 
             self.users.update_one(
                 {"email": email}, {"$set": {f"custom_data.{field}": custom_data}}
             )
-            return {"success": True, "message": "Custom user data field updated."}
+            return {"success": True, "message": self.messages["data_changed"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
