@@ -319,6 +319,26 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
+    def unblock_user(self, email):
+        """
+        Unblocks a user by changing their entry to unblocked.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
+            if not user or not blocked_user:
+                return {"success": False, "message": "User not found."}
+            self.blocked.update_one({"email": email}, {"$set": {"blocked": False}})
+            return {"success": True, "message": "User unblocked."}
+        except Exception as error:  # pylint: disable=broad-except
+            return {"success": False, "message": str(error)}
+
     def get_cust_usr_data(self, email):
         """
         retrieves custom user data
