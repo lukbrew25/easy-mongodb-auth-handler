@@ -1,5 +1,5 @@
 """
-Setup script for the easy_mongodb_auth_handler package.
+Setup script for the easy-mongodb-auth-handler package.
 """
 
 
@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="easy_mongodb_auth_handler",
+    name="easy-mongodb-auth-handler",
     version="1.0.6",
     description="A user authentication and verification system using MongoDB.",
     author="Lukbrew25",
