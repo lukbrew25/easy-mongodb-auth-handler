@@ -12,6 +12,10 @@ from .utils import (
 )
 
 
+#pylint: disable=inconsistent-return-statements
+#pylint: disable=trailing-whitespace
+
+
 class Auth:
     """
     Handles user authentication and management using MongoDB.
