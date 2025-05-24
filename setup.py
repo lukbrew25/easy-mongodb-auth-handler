@@ -16,7 +16,7 @@ setup(
     author="Lukbrew25",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/lukbrew25/easy_mongodb_auth_handler/",
+    url="https://github.com/lukbrew25/easy-mongodb-auth-handler/",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
