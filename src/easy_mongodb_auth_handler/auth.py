@@ -21,7 +21,7 @@ class Auth:
     Handles user authentication and management using MongoDB.
     """
 
-    def __init__(self, mongo_uri, db_name, mail_info=None):
+    def __init__(self, mongo_uri, db_name, mail_info=None, blocking=True):
         """
         initializes the Auth class
 
@@ -30,12 +30,14 @@ class Auth:
             db_name (str): Name of the database.
             mail_info (dict, optional): Email server configuration with keys:
                 'server', 'port', 'username', 'password'.
+            blocking (bool): Enable user blocking.
         """
         self.client = MongoClient(mongo_uri)
         self.db = self.client[db_name]
         self.users = self.db["users"]
         self.blocked = self.db["blocked"]
         self.mail_info = mail_info or {}
+        self.blocking = blocking
 
     def _find_user(self, email):
         """
@@ -61,14 +63,14 @@ class Auth:
         """
         return self.blocked.find_one({"email": email})
 
-    def register_user_no_verif(self, email, password, blocking=True):
+    def register_user_no_verif(self, email, password, custom_data=False):
         """
         registers a user without email verification
 
         Args:
             email (str): User's email address.
             password (str): User's password.
-            blocking (bool): Enable user blocking.
+            custom_data: Custom data to save with the user.
 
         Returns:
             dict: Success status and message.
@@ -78,16 +80,20 @@ class Auth:
                 return {"success": False, "message": "Invalid email format."}
             if self._find_user(email):
                 return {"success": False, "message": "User already exists."}
-            if blocking:
+            if self.blocking:
                 blocked_user = self._find_blocked_user(email)
                 if blocked_user:
                     if blocked_user["blocked"]:
                         return {"success": False, "message": "User is blocked."}
-            else:
-                self.blocked.insert_one({"email": email, "blocked": False})
             hashed_password = hash_password(password)
             self.users.insert_one(
-                {"email": email, "password": hashed_password, "verified": True}
+                {
+                    "email": email,
+                    "password": hashed_password,
+                    "blocked": False,
+                    "verified": True,
+                    "custom_data": custom_data
+                }
             )
             return {"success": True, "message": "User registered without verification."}
         except Exception as error:  # pylint: disable=broad-except
@@ -117,14 +123,14 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def register_user(self, email, password, blocking=True):
+    def register_user(self, email, password, custom_data=False):
         """
         registers a user with email verification
 
         Args:
             email (str): User's email address.
             password (str): User's password.
-            blocking (bool): Enable user blocking.
+            custom_data: Custom data to save with the user.
 
         Returns:
             dict: Success status and message.
@@ -135,13 +141,11 @@ class Auth:
             if self.users.find_one({"email": email}):
                 return {"success": False, "message": "User already exists."}
 
-            if blocking:
+            if self.blocking:
                 blocked_user = self._find_blocked_user(email)
                 if blocked_user:
                     if blocked_user["blocked"]:
                         return {"success": False, "message": "User is blocked."}
-                else:
-                    self.blocked.insert_one({"email": email, "blocked": False})
             hashed_password = hash_password(password)
             verification_code = generate_secure_code()
             send_verification_email(self.mail_info, email, verification_code)
@@ -149,22 +153,23 @@ class Auth:
                 {
                     "email": email,
                     "password": hashed_password,
-                    "verified": False,
                     "verification_code": verification_code,
+                    "blocked": False,
+                    "verified": False,
+                    "custom_data": custom_data,
                 }
             )
             return {"success": True, "message": "User registered. Verification email sent."}
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def verify_user(self, email, code, blocking=True):
+    def verify_user(self, email, code):
         """
         verifies a user's email using a verification code.
 
         Args:
             email (str): User's email address.
             code (str): Verification code.
-            blocking (bool): Enable user blocking.
 
         Returns:
             dict: Success status and message.
@@ -174,7 +179,7 @@ class Auth:
             blocked_user = self._find_blocked_user(email)
             if not user:
                 return {"success": False, "message": "User not found."}
-            if blocking:
+            if self.blocking:
                 if not blocked_user:
                     return {"success": False, "message": "User is not found in blocked database."}
                 if blocked_user["blocked"]:
@@ -186,14 +191,13 @@ class Auth:
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
 
-    def authenticate_user(self, email, password, blocking=True): # pylint: disable=too-many-return-statements
+    def authenticate_user(self, email, password): # pylint: disable=too-many-return-statements
         """
         authenticates a user
 
         Args:
             email (str): User's email address.
             password (str): User's password.
-            blocking (bool): Enable user blocking.
 
         Returns:
             dict: Success status and message.
@@ -203,7 +207,7 @@ class Auth:
             blocked_user = self._find_blocked_user(email)
             if not user:
                 return {"success": False, "message": "User not found."}
-            if blocking:
+            if self.blocking:
                 if not blocked_user:
                     return {"success": False, "message": "User is not found in blocked database."}
                 if blocked_user["blocked"]:
