@@ -318,3 +318,81 @@ class Auth:
             return {"success": True, "message": "User blocked."}
         except Exception as error:  # pylint: disable=broad-except
             return {"success": False, "message": str(error)}
+
+    def get_cust_usr_data(self, email):
+        """
+        retrieves custom user data
+        Args:
+            email (str): User's email address.
+        Returns:
+            dict: Success status and message.
+        """
+
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+        custom_data = user.get("custom_data")
+        if custom_data:
+            return {"success": True, "message": custom_data}
+        return {"success": True, "message": "No data found."}
+
+    def get_some_cust_usr_data(self, email, field):
+        """
+        retrieves specific custom user data
+        Args:
+            email (str): User's email address.
+            field (str): Specific field to retrieve.
+        Returns:
+            dict: Success status and message.
+        """
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+        custom_data = user.get("custom_data").get(field)
+        if custom_data:
+            return {"success": True, "message": custom_data}
+        return {"success": True, "message": "No data found."}
+
+    def replace_usr_data(self, email, custom_data):
+        """
+        replaces custom user data
+        Args:
+            email (str): User's email address.
+            custom_data: New custom data to save with the user.
+        Returns:
+            dict: Success status and message.
+        """
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+
+        self.users.update_one(
+            {"email": email}, {"$set": {"custom_data": custom_data}}
+        )
+        return {"success": True, "message": "Custom user data changed."}
+
+    def update_usr_data(self, email, field, custom_data):
+        """
+        updates a specific field in the custom user data
+        Args:
+            email (str): User's email address.
+            field (str): Field to update.
+            custom_data: New value for the field.
+        Returns:
+            dict: Success status and message.
+        """
+        user = self.users.find_one({"email": email})
+
+        if not user:
+            return {"success": False, "message": "User not found."}
+
+        if not user.get("custom_data").get(field):
+            return {"success": False, "message": "Field not found."}
+
+        self.users.update_one(
+            {"email": email}, {"$set": {f"custom_data.{field}": custom_data}}
+        )
+        return {"success": True, "message": "Custom user data field updated."}
