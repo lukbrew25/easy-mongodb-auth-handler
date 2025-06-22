@@ -95,6 +95,27 @@ class Auth:
         """
         return self.blocked.find_one({"email": email})
 
+    def _block_checker(self, email, user):
+        """
+        helper to check if a user is blocked.
+
+        Args:
+            email (str): User's email address.
+            user (dict): User document.
+
+        Returns:
+            dict: Error message if user is blocked or not found, None otherwise.
+        """
+        blocked_user = self._find_blocked_user(email)
+        if not user:
+            return {"success": False, "message": self.messages["user_not_found"]}
+        if self.blocking:
+            if not blocked_user:
+                return {"success": False, "message": self.messages["not_found_blocked"]}
+            if blocked_user["blocked"]:
+                return {"success": False, "message": self.messages["user_blocked"]}
+        return None
+
     def register_user_no_verif(self, email, password, custom_data=False):
         """
         registers a user without email verification
@@ -212,14 +233,9 @@ class Auth:
         """
         try:
             user = self.users.find_one({"email": email})
-            blocked_user = self._find_blocked_user(email)
-            if not user:
-                return {"success": False, "message": self.messages["user_not_found"]}
-            if self.blocking:
-                if not blocked_user:
-                    return {"success": False, "message": self.messages["not_found_blocked"]}
-                if blocked_user["blocked"]:
-                    return {"success": False, "message": self.messages["user_blocked"]}
+            output = self._block_checker(email, user)
+            if output:
+                return output
             if user["verification_code"] == code:
                 self.users.update_one({"email": email}, {"$set": {"verified": True}})
                 return {"success": True, "message": self.messages["user_verified"]}
@@ -240,14 +256,9 @@ class Auth:
         """
         try:
             user = self._find_user(email)
-            blocked_user = self._find_blocked_user(email)
-            if not user:
-                return {"success": False, "message": self.messages["user_not_found"]}
-            if self.blocking:
-                if not blocked_user:
-                    return {"success": False, "message": self.messages["not_found_blocked"]}
-                if blocked_user["blocked"]:
-                    return {"success": False, "message": self.messages["user_blocked"]}
+            output = self._block_checker(email, user)
+            if output:
+                return output
             if not user["verified"]:
                 return {"success": False, "message": self.messages["not_verified"]}
             if check_password(user, password):
