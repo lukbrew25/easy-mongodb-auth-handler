@@ -535,7 +535,7 @@ class Auth:
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
             temp_check = user.get("custom_data")
-            if not temp_check or not field not in temp_check:
+            if not temp_check or field not in temp_check:
                 return {"success": False, "message": self.messages["field_not_found"]}
 
             self.users.update_one(
