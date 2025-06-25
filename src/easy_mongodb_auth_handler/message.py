@@ -4,7 +4,7 @@
 
 def get_messages(usr_readable):
     """
-    Get messages dictionary based on user readability preference.
+    Get message dictionary based on user readability preference.
 
     Args:
         usr_readable: bool
