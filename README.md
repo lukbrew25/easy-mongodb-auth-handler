@@ -32,6 +32,9 @@ easy_mongodb_auth_handler/
 - User login/authentication
 - Password reset via email verification
 - MongoDB-based user data persistence
+- Saving custom per user data
+- User blocking functionality
+- Email change with or without verification
 
 ## Usage
 
@@ -42,12 +45,12 @@ auth = Auth(
     mongo_uri="mongodb://localhost:27017",
     db_name="mydb",
     mail_info={
-        server="smtp.example.com",
-        port=587,
-        username="your_email@example.com",
-        password="your_email_password"
+        "server": "smtp.example.com",
+        "port": 587,
+        "username": "your_email@example.com",
+        "password": "your_email_password"
     }, # Optional: Include if using email verification
-    blocking=True/False  # Optional: True to enable user blocking
+    blocking=True/False,  # Optional: True to enable user blocking
     readable_errors=True/False  # Optional: False to switch to numeric error codes translated in the README.md file
 )
 ```
@@ -62,19 +65,19 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
 
 ### User Registration & Verification
 
-- **register_user(email, password, custom_data=False)**
+- **register_user(email, password, custom_data=None)**
   - Registers a user and sends a verification code via email.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
-    - `custom_data` (`any`, optional): Additional user info to store.
+    - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
 
-- **register_user_no_verif(email, password, custom_data=False)**
+- **register_user_no_verif(email, password, custom_data=None)**
   - Registers a user without email verification.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
-    - `custom_data` (`any`, optional): Additional user info to store.
+    - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
 
 - **verify_user(email, code)**
   - Verifies a user by checking the provided verification code.
@@ -168,7 +171,7 @@ Store all custom data in a dictionary format for more storage and to use the 2nd
     - `email` (`str`): User's email address.
 
 - **get_some_cust_usr_data(email, field)**
-  - Retrieves a specific dictionary entry from the user's custom data.
+  - Retrieves a specific dictionary entry from the user's custom data. REQUIRES the custom data to be stored in a dictionary format.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `field` (`str`): Dictionary name to retrieve.
@@ -180,7 +183,7 @@ Store all custom data in a dictionary format for more storage and to use the 2nd
     - `custom_data` (`any`): New custom data to store.
 
 - **update_usr_data(email, field, custom_data)**
-  - Updates a specific dictionary entry in the user's custom data.
+  - Updates a specific dictionary entry in the user's custom data. REQUIRES the custom data to be stored in a dictionary format.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `field` (`str`): Dictionary name to update.
