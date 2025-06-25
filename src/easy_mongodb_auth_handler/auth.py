@@ -146,7 +146,7 @@ class Auth:
 
     def change_email_no_verif(self, email, new_email, password):
         """
-        resets a user's password without email verification
+        resets a user's email without previous email verification
 
         Args:
             email (str): User's email address.
