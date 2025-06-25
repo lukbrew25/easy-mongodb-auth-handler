@@ -16,12 +16,20 @@ Make sure you have MongoDB installed and running. You also need access to an SMT
 
 ```
 easy_mongodb_auth_handler/
-├── setup.py
+|-─ dist/[builds here]
 ├── src/
 │   └── easy_mongodb_auth_handler/
 │       ├── __init__.py
 │       ├── auth.py
 │       └── utils.py
+|── README.md
+|── LICENSE
+|── requirements.txt
+|-- MANIFEST.in
+|── setup.py
+|── .gitignore
+|── .pylintrc
+|--CONTRIBUTING.md
 ```
 
 ## Features
@@ -194,6 +202,40 @@ Store all custom data in a dictionary format for more storage and to use the 2nd
 - Python >= 3.8
 - pymongo >= 4.0.0
 - bcrypt >= 4.0.0
+
+## Return code translation
+These codes are returned by the functions in the package if `readable_errors` is set to `False`.
+Error codes starting with 2xx indicate success, while those starting with 4xx indicate errors. 
+3xx codes indicate user status checks. 5xx codes indicate authentication errors.
+
+| Numeric Code | User-Friendly Message                              |
+|--------------|----------------------------------------------------|
+| 200          | Success                                            |
+| 201          | Verification email sent.                           |
+| 202          | Authentication successful.                         |
+| 203          | Password reset successful.                         |
+| 204          | User deleted.                                      |
+| 205          | Custom user data field updated.                    |
+| 206          | Custom user data changed.                          |
+| 207          | User unblocked.                                    |
+| 300          | User verified.                                     |
+| 301          | User is not blocked.                               |
+| 302          | User is not verified.                              |
+| 400          | Error                                              |
+| 402          | User already exists.                               |
+| 403          | User is blocked.                                   |
+| 404          | User not found.                                    |
+| 410          | Failed to delete user.                             |
+| 412          | Field not found.                                   |
+| 417          | Invalid code.                                      |
+| 419          | Failed to delete user.                             |
+| 420          | User deleted but not from blocked database.        |
+| 421          | Failed to delete user from all databases.          |
+| 423          | User is not found in blocked database.             |
+| 500          | Invalid old password.                              |
+| 501          | Invalid password.                                  |
+| 502          | Invalid credentials.                               |
+| 503          | Invalid email format.                              |
 
 ## License
 
