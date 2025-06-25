@@ -167,6 +167,8 @@ class Auth:
             user = self._find_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
+            if self.users.find_one({"email": new_email}):
+                return {"success": False, "message": self.messages["user_exists"]}
             if not check_password(user, password):
                 return {"success": False, "message": self.messages["invalid_pass"]}
             self.users.update_one({"email": email}, {"$set": {"email": new_email}})
