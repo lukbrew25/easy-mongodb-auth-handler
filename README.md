@@ -42,12 +42,13 @@ auth = Auth(
     mongo_uri="mongodb://localhost:27017",
     db_name="mydb",
     mail_info={
-        mail_server="smtp.example.com",
-        mail_port=587,
-        mail_username="your_email@example.com",
-        mail_password="your_email_password"
+        server="smtp.example.com",
+        port=587,
+        username="your_email@example.com",
+        password="your_email_password"
     }, # Optional: Include if using email verification
     blocking=True/False  # Optional: True to enable user blocking
+    readable_errors=True/False  # Optional: False to switch to numeric error codes translated in the README.md file
 )
 ```
 This code initializes the package. 
@@ -109,6 +110,23 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `reset_code` (`str`): Code sent to the user's email.
     - `new_password` (`str`): New password to set.
+
+### Email Management
+
+- **change_email_no_verif(email, new_email, password)**
+  - Changes the user's email address without requiring email verification.
+  - **Parameters:**
+    - `email` (`str`): User's current email address.
+    - `new_email` (`str`): New email address to set.
+    - `password` (`str`): User's password.
+
+- **verify_reset_code_and_change_email(email, reset_code, new_email, password=None)**
+  - Changes the user's email address after verifying a reset code sent to their email. Optionally verifies the password.
+  - **Parameters:**
+    - `email` (`str`): User's current email address.
+    - `reset_code` (`str`): Reset code sent to the user's email.
+    - `new_email` (`str`): New email address to set.
+    - `password` (`str`, optional): User's password for additional verification.
 
 ### User Deletion & Blocking
 When a user is blocked, they cannot log in or perform any actions that require authentication.
