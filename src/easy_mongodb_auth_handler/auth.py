@@ -151,6 +151,29 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
+    def change_email_no_verif(self, email, new_email, password):
+        """
+        resets a user's password without email verification
+
+        Args:
+            email (str): User's email address.
+            new_email (str): User's new email.
+            password (str): password.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            if not check_password(user, password):
+                return {"success": False, "message": self.messages["invalid_pass"]}
+            self.users.update_one({"email": email}, {"$set": {"email": new_email}})
+            return {"success": True, "message": self.messages["password_reset_success"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
     def register_user(self, email, password, custom_data=False):
         """
         registers a user with email verification
@@ -321,6 +344,37 @@ class Auth:
                 {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
             )
             return {"success": True, "message": self.messages["password_reset_success"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def verify_reset_code_and_change_email(self, email, reset_code, new_email, password=None):
+        """
+        verifies a reset code and changes the user's email
+
+        Args:
+            email (str): User's email address.
+            reset_code (str): Reset code.
+            new_email (str): New email address.
+            password (str, optional): User's password for verification if included.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self.users.find_one({"email": email})
+            user_info = self._find_user(email)
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            if user.get("reset_code") != reset_code:
+                return {"success": False, "message": self.messages["invalid_reset"]}
+            if password:
+                if not check_password(user_info, password):
+                    return {"success": False, "message": self.messages["invalid_pass"]}
+
+            self.users.update_one(
+                {"email": email}, {"$set": {"email": new_email, "reset_code": None}}
+            )
+            return {"success": True, "message": self.messages["success"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
