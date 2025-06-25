@@ -82,7 +82,7 @@ class Auth:
                 return {"success": False, "message": self.messages["user_blocked"]}
         return None
 
-    def register_user_no_verif(self, email, password, custom_data=False):
+    def register_user_no_verif(self, email, password, custom_data=None):
         """
         registers a user without email verification
 
@@ -94,6 +94,8 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
+        if custom_data is None:
+            custom_data = {}
         try:
             if not validate_email(email):
                 return {"success": False, "message": self.messages["invalid_email"]}
@@ -169,7 +171,7 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def register_user(self, email, password, custom_data=False):
+    def register_user(self, email, password, custom_data=None):
         """
         registers a user with email verification
 
@@ -181,6 +183,8 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
+        if custom_data is None:
+            custom_data = {}
         try:
             if not validate_email(email):
                 return {"success": False, "message": self.messages["invalid_email"]}
