@@ -18,7 +18,6 @@ from .message import get_messages
 #pylint: disable=too-many-return-statements
 #pylint: disable=broad-except
 #pylint: disable=too-many-arguments
-#pylint: disable=too-many-positional-arguments
 
 
 class Auth:
