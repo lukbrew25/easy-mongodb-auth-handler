@@ -54,7 +54,6 @@ class Auth:
             "user_deleted": "User deleted.",
             "user_not_deleted": "Failed to delete user.",
             "data_updated": "Custom user data field updated.",
-            "data_not_found": "No data found.",
             "field_not_found": "Field not found.",
             "data_changed": "Custom user data changed.",
             "not_blocked": "User is not blocked.",
@@ -446,9 +445,7 @@ class Auth:
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
             custom_data = user.get("custom_data")
-            if custom_data:
-                return {"success": True, "message": custom_data}
-            return {"success": True, "message": self.messages["data_not_found"]}
+            return {"success": True, "message": custom_data}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -463,13 +460,12 @@ class Auth:
         """
         try:
             user = self.users.find_one({"email": email})
-
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            custom_data = user.get("custom_data").get(field)
+            custom_data = user.get("custom_data")
             if custom_data:
-                return {"success": True, "message": custom_data}
-            return {"success": True, "message": self.messages["data_not_found"]}
+                custom_data = user.get("custom_data").get(field)
+            return {"success": True, "message": custom_data}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
