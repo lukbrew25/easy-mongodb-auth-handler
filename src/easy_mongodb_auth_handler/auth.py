@@ -365,6 +365,8 @@ class Auth:
             user_info = self._find_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
+            if self.users.find_one({"email": new_email}):
+                return {"success": False, "message": self.messages["user_exists"]}
             if user.get("reset_code") != reset_code:
                 return {"success": False, "message": self.messages["invalid_reset"]}
             if password:
