@@ -170,7 +170,7 @@ class Auth:
             if not check_password(user, password):
                 return {"success": False, "message": self.messages["invalid_pass"]}
             self.users.update_one({"email": email}, {"$set": {"email": new_email}})
-            return {"success": True, "message": self.messages["password_reset_success"]}
+            return {"success": True, "message": self.messages["success"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
