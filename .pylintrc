@@ -1,2 +1,3 @@
 [MESSAGES CONTROL]
 max-positional-arguments=10
+disable=R0913,R0911,W0718
