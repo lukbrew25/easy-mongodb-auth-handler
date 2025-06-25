@@ -32,7 +32,16 @@ class Auth:
         self.db = self.client[db_name]
         self.users = self.db["users"]
         self.blocked = self.db["blocked"]
-        self.mail_info = mail_info or {}
+        self.mail_info = mail_info
+        if self.mail_info:
+            if not self.mail_info["server"]:
+                raise ValueError("Mail server information is incomplete - missing server key.")
+            if not self.mail_info["port"]:
+                raise ValueError("Mail server information is incomplete - missing port key.")
+            if not self.mail_info["username"]:
+                raise ValueError("Mail server information is incomplete - missing username key.")
+            if not self.mail_info["password"]:
+                raise ValueError("Mail server information is incomplete - missing password key.")
         self.blocking = blocking
         self.messages = get_messages(readable_errors)
 
@@ -185,6 +194,8 @@ class Auth:
         """
         if custom_data is None:
             custom_data = {}
+        if not self.mail_info:
+            raise ValueError("Mail server information is required for user verification.")
         try:
             if not validate_email(email):
                 return {"success": False, "message": self.messages["invalid_email"]}
@@ -307,6 +318,8 @@ class Auth:
         Returns:
             dict: Success status and message.
         """
+        if not self.mail_info:
+            raise ValueError("Mail server information is required for reset codes.")
         try:
             user = self.users.find_one({"email": email})
             if not user:
