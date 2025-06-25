@@ -12,14 +12,6 @@ from .utils import (
 )
 from .message import get_messages
 
-
-#pylint: disable=inconsistent-return-statements
-#pylint: disable=trailing-whitespace
-#pylint: disable=too-many-return-statements
-#pylint: disable=broad-except
-#pylint: disable=too-many-arguments
-
-
 class Auth:
     """
     Handles user authentication and management using MongoDB.
