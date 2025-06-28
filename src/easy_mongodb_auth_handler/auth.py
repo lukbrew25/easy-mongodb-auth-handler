@@ -12,6 +12,7 @@ from .utils import (
 )
 from .message import get_messages
 
+
 class Auth:
     """
     Handles user authentication and management using MongoDB.
