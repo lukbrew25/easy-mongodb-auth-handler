@@ -40,6 +40,7 @@ easy_mongodb_auth_handler/
 |── setup.py
 |── .gitignore
 |── .pylintrc
+|── .flake8
 └──CONTRIBUTING.md
 ```
 
