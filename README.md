@@ -16,20 +16,31 @@ Make sure you have MongoDB installed and running. You also need access to an SMT
 
 ```
 easy_mongodb_auth_handler/
-|-─ dist/[builds here]
+├── .github/
+│   └── workflows/
+│       ├── pylint.yml
+│       ├── pylintmin.yml
+│       └── python-package.yml
+|── dist/
+|   ├── easy_mongodb_auth_handler-x.x.x-py3-none-any.whl
+|   └── easy_mongodb_auth_handler-x.x.x.tar.gz
 ├── src/
+│   ├── .gitignore
 │   └── easy_mongodb_auth_handler/
+│       ├── .gitignore
 │       ├── __init__.py
 │       ├── auth.py
+│       ├── message.py
 │       └── utils.py
 |── README.md
 |── LICENSE
 |── requirements.txt
-|-- MANIFEST.in
+|── minrequirements.txt
+|── MANIFEST.in
 |── setup.py
 |── .gitignore
 |── .pylintrc
-|--CONTRIBUTING.md
+└──CONTRIBUTING.md
 ```
 
 ## Features
