@@ -45,7 +45,6 @@ class Auth:
         self.blocking = blocking
         self.messages = get_messages(readable_errors)
 
-
     def _find_user(self, email):
         """
         Helper to find a user by email.

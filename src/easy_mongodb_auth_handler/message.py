@@ -2,6 +2,7 @@
     Return message dictionary.
 """
 
+
 def get_messages(usr_readable):
     """
     Get message dictionary based on user readability preference.
