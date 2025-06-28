@@ -18,8 +18,8 @@ Make sure you have MongoDB installed and running. You also need access to an SMT
 easy_mongodb_auth_handler/
 ├── .github/
 │   └── workflows/
-│       ├── pylint.yml
-│       ├── pylintmin.yml
+│       ├── linter.yml
+│       ├── minlinter.yml
 │       └── python-package.yml
 |── dist/
 |   ├── easy_mongodb_auth_handler-x.x.x-py3-none-any.whl
