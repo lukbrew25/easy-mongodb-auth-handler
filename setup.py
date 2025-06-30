@@ -20,8 +20,9 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
-        "pymongo>=4.6.3",
-        "bcrypt>=4.0.0"
+        "bcrypt>=4.0.0",
+        "certifi>=2025.6.15",
+        "pymongo>=4.6.3"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

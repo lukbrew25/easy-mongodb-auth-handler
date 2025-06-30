@@ -2,7 +2,9 @@
 Authentication and user management for the easy_mongodb_auth_handler package.
 """
 
-from pymongo import MongoClient
+import time
+from pymongo import MongoClient, errors
+import certifi
 from .utils import (
     validate_email,
     hash_password,
@@ -18,7 +20,7 @@ class Auth:
     Handles user authentication and management using MongoDB.
     """
 
-    def __init__(self, mongo_uri, db_name, mail_info=None, blocking=True, readable_errors=True):
+    def __init__(self, mongo_uri, db_name, mail_info=None, blocking=True, readable_errors=True, attempts=6, delay=10):
         """
         initializes the Auth class
 
@@ -28,9 +30,26 @@ class Auth:
             mail_info (dict, optional): Email server configuration with keys:
                 'server', 'port', 'username', 'password'.
             blocking (bool): Enable user blocking.
+            readable_errors (bool): Use readable error messages.
+            attempts (int): Number of connection attempts.
+            delay (int): Delay between connection attempts in seconds.
         """
-        self.client = MongoClient(mongo_uri)
-        self.db = self.client[db_name]
+        self.db = None
+        self.RETRY_COUNT = 0
+        if attempts < 1:
+            raise ValueError("Number of attempts must be at least 1.")
+        if delay < 0:
+            raise ValueError("Delay must be a non-negative integer.")
+        self.MAX_RETRIES = attempts
+        while self.db is None and self.RETRY_COUNT < self.MAX_RETRIES:
+            try:
+                self.client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
+                self.db = self.client[db_name]
+            except Exception:
+                self.RETRY_COUNT += 1
+                time.sleep(delay)
+        if self.db is None:
+            raise Exception('Could not connect to MongoDB instance.')
         self.users = self.db["users"]
         self.blocked = self.db["blocked"]
         self.mail_info = mail_info
