@@ -81,7 +81,11 @@ auth = Auth(
 This code initializes the package. 
 The mail arguments are not required, but needed to use verification code functionality. 
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
-All methods return True or False with additional detailed outcome reports.
+All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format):
+{
+    "success": True/False, 
+    "message": "specific message or error code"
+}
 
 ## Function Reference - auth.example_func(args)
 
@@ -103,6 +107,12 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `password` (`str`): User's password.
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
 
+- **register_user_no_pass(email, custom_data=None)**
+  - Registers a user without a password and sends a verification code via email.
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+    - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
+
 - **verify_user(email, code)**
   - Verifies a user by checking the provided verification code.
   - **Parameters:**
@@ -116,6 +126,19 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
+    - `mfa` (`bool`, optional): If set to `True`, it will send the user a six-digit code to their email for multi-factor authentication. Defaults to `False`.
+- 
+- **verify_mfa_code(email, code)**
+  - Verifies the multi-factor authentication code sent to the user's email. Can be used in conjunction with register_user_no_pass(), verify_user(), and generate_code() for passwordless sign-in.
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+    - `code` (`str`): Six-digit code sent to the user's email.
+
+### MFA Code Management
+- **generate_code(email)**
+  - Generates and emails a code to the user. Call before password and email resets or when signing in without password.
+  - **Parameters:**
+    - `email` (`str`): User's email address.
 
 ### Password Management
 
@@ -125,11 +148,6 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `old_password` (`str`): User's current password.
     - `new_password` (`str`): New password to set.
-
-- **generate_reset_code(email)**
-  - Generates and emails a password reset code to the user.
-  - **Parameters:**
-    - `email` (`str`): User's email address.
 
 - **verify_reset_code_and_reset_password(email, reset_code, new_password)**
   - Verifies a password reset code and resets the user's password.
@@ -148,7 +166,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `password` (`str`): User's password.
 
 - **verify_reset_code_and_change_email(email, reset_code, new_email, password=None)**
-  - Changes the user's email address after verifying a reset code sent to their email. Optionally verifies the password.
+  - Changes the user's email address after verifying a reset code sent to their email. Optionally uses password verification if the user has a saved password or one is provided.
   - **Parameters:**
     - `email` (`str`): User's current email address.
     - `reset_code` (`str`): Reset code sent to the user's email.
@@ -188,14 +206,20 @@ When a user is blocked, they cannot log in or perform any actions that require a
 ### Custom User Data
 Custom user data is a flexible field that can store any type of data. It is stored alongside the normal user data.
 Store all custom data in a dictionary format for more storage and to use the 2nd and 4th functions in the section below.
+If the method is meant to return data, it will do so in the following format:
+
+{
+    "success": True/False,
+    "message": "Custom user data if success OR error code if failure"
+}
 
 - **get_cust_usr_data(email)**
-  - Retrieves all custom user data for the user.
+  - Returns all custom user data for the user.
   - **Parameters:**
     - `email` (`str`): User's email address.
 
 - **get_some_cust_usr_data(email, field)**
-  - Retrieves a specific dictionary entry from the user's custom data. REQUIRES the custom data to be stored in a dictionary format.
+  - Returns a specific dictionary entry from the user's custom data. REQUIRES the custom data to be stored in a dictionary format.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `field` (`str`): Dictionary name to retrieve.

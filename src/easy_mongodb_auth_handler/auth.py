@@ -250,6 +250,50 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
+    def register_user_no_pass(self, email, custom_data=None):
+        """
+        registers a user without password and instead uses email verification.
+
+        Args:
+            email (str): User's email address.
+            custom_data: Custom data to save with the user.
+
+        Returns:
+            dict: Success status and message.
+        """
+        if custom_data is None:
+            custom_data = {}
+        if not self.mail_info:
+            raise ValueError("Mail server information is required for user verification.")
+        try:
+            if not validate_email(email):
+                return {"success": False, "message": self.messages["invalid_email"]}
+            if self.users.find_one({"email": email}):
+                return {"success": False, "message": self.messages["user_exists"]}
+
+            if self.blocking:
+                blocked_user = self._find_blocked_user(email)
+                if blocked_user:
+                    if blocked_user["blocked"]:
+                        return {"success": False, "message": self.messages["user_blocked"]}
+                else:
+                    self.blocked.insert_one({"email": email, "blocked": False})
+            verification_code = generate_secure_code()
+            send_verification_email(self.mail_info, email, verification_code)
+            self.users.insert_one(
+                {
+                    "email": email,
+                    "password": None,
+                    "verification_code": verification_code,
+                    "blocked": False,
+                    "verified": False,
+                    "custom_data": custom_data
+                }
+            )
+            return {"success": True, "message": self.messages["verification_code_sent"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
     def verify_user(self, email, code):
         """
         verifies a user's email using a verification code.
@@ -273,13 +317,14 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def authenticate_user(self, email, password):
+    def authenticate_user(self, email, password, mfa=False):
         """
         authenticates a user
 
         Args:
             email (str): User's email address.
             password (str): User's password.
+            mfa (bool): Enable multi-factor authentication.
 
         Returns:
             dict: Success status and message.
@@ -292,8 +337,37 @@ class Auth:
             if not user["verified"]:
                 return {"success": False, "message": self.messages["not_verified"]}
             if check_password(user, password):
+                if mfa:
+                    verification_code = generate_secure_code()
+                    self.users.find_one_and_update(
+                        {"email": email},
+                        {"$set": {"verification_code": verification_code}}
+                    )
+                    send_verification_email(self.mail_info, email, verification_code)
                 return {"success": True, "message": self.messages["authentication_success"]}
             return {"success": False, "message": self.messages["invalid_creds"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def verify_mfa_code(self, email, code):
+        """
+        verifies a user's MFA code
+
+        Args:
+            email (str): User's email address.
+            code (str): MFA code.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            output = self._block_checker(email, user)
+            if output:
+                return output
+            if user["verification_code"] == code:
+                return {"success": True, "message": self.messages["mfa_success"]}
+            return {"success": False, "message": self.messages["invalid_mfa_code"]}
         except Exception as error:
             return {"success": False, "message": str(error)}
 
@@ -332,9 +406,9 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def generate_reset_code(self, email):
+    def generate_code(self, email):
         """
-        Generates a password reset code and sends it to the user's email.
+        Generates a code and sends it to the user's email.
 
         Args:
             email (str): User's email address.
@@ -350,7 +424,7 @@ class Auth:
                 return {"success": False, "message": self.messages["user_not_found"]}
 
             reset_code = generate_secure_code()
-            self.users.update_one({"email": email}, {"$set": {"reset_code": reset_code}})
+            self.users.update_one({"email": email}, {"$set": {"verification_code": reset_code}})
             send_verification_email(self.mail_info, email, reset_code)
             return {"success": True, "message": self.messages["verification_code_sent"]}
         except Exception as error:
@@ -372,12 +446,12 @@ class Auth:
             user = self.users.find_one({"email": email})
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if user.get("reset_code") != reset_code:
+            if user.get("verification_code") != reset_code:
                 return {"success": False, "message": self.messages["invalid_reset"]}
 
             hashed_password = hash_password(new_password)
             self.users.update_one(
-                {"email": email}, {"$set": {"password": hashed_password, "reset_code": None}}
+                {"email": email}, {"$set": {"password": hashed_password, "verification_code": None}}
             )
             return {"success": True, "message": self.messages["password_reset_success"]}
         except Exception as error:
@@ -403,14 +477,14 @@ class Auth:
                 return {"success": False, "message": self.messages["user_not_found"]}
             if self.users.find_one({"email": new_email}):
                 return {"success": False, "message": self.messages["user_exists"]}
-            if user.get("reset_code") != reset_code:
+            if user.get("verification_code") != reset_code:
                 return {"success": False, "message": self.messages["invalid_reset"]}
-            if password:
+            if password or user_info.get("password"):
                 if not check_password(user_info, password):
                     return {"success": False, "message": self.messages["invalid_pass"]}
 
             self.users.update_one(
-                {"email": email}, {"$set": {"email": new_email, "reset_code": None}}
+                {"email": email}, {"$set": {"email": new_email, "verification_code": None}}
             )
             return {"success": True, "message": self.messages["success"]}
         except Exception as error:
