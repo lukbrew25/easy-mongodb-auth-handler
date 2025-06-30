@@ -20,7 +20,9 @@ class Auth:
     Handles user authentication and management using MongoDB.
     """
 
-    def __init__(self, mongo_uri, db_name, mail_info=None, blocking=True, readable_errors=True, attempts=6, delay=10):
+    def __init__(self, mongo_uri, db_name, mail_info=None,
+                 blocking=True, readable_errors=True, attempts=6,
+                 delay=10):
         """
         initializes the Auth class
 
@@ -43,7 +45,9 @@ class Auth:
         self.max_retries = attempts
         while self.db is None and self.retry_count < self.max_retries:
             try:
-                self.client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
+                self.client = MongoClient(mongo_uri,
+                                          serverSelectionTimeoutMS=5000,
+                                          tlsCAFile=certifi.where())
                 self.db = self.client[db_name]
             except Exception:
                 self.retry_count += 1
