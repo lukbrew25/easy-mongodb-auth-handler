@@ -3,7 +3,7 @@ Authentication and user management for the easy_mongodb_auth_handler package.
 """
 
 import time
-from pymongo import MongoClient, errors
+from pymongo import MongoClient
 import certifi
 from .utils import (
     validate_email,
