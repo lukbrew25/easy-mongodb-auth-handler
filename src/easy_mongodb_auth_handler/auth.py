@@ -406,6 +406,44 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
+    def delete_user_with_verif(self, email, password, code, del_from_blocking=True):
+        """
+        deletes a user account
+
+        Args:
+            email (str): User's email address.
+            password (str): User's password.
+            code (str): Verification code.
+            del_from_blocking (bool): Delete the user from the blocked database.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            if not check_password(user, password):
+                return {"success": False, "message": self.messages["invalid_pass"]}
+            if user.get("verification_code") != code:
+                return {"success": False, "message": self.messages["invalid_reset"]}
+            result = self.users.delete_one({"email": email})
+            if blocked_user:
+                if del_from_blocking:
+                    block_result = self.blocked.delete_one({"email": email})
+                    if block_result.deleted_count == 0:
+                        if result.deleted_count == 0:
+                            return {"success": False, "message": self.messages["not_deleted_all"]}
+                        return {"success": False, "message": self.messages["not_deleted_blocked"]}
+                elif not blocked_user["blocked"]:
+                    self.blocked.delete_one({"email": email})
+            if result.deleted_count > 0:
+                return {"success": True, "message": self.messages["user_deleted"]}
+            return {"success": False, "message": self.messages["user_not_deleted"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
     def generate_code(self, email):
         """
         Generates a code and sends it to the user's email.

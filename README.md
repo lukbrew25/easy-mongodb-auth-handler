@@ -183,6 +183,14 @@ When a user is blocked, they cannot log in or perform any actions that require a
     - `password` (`str`): User's password.
     - `del_from_blocking` (`bool`, optional): Also remove from blocking database (default: True).
 
+- **delete_user_with_verif(email, password, code, del_from_blocking=True)**
+  - Deletes a user from the database if credentials and code match. If `del_from_blocking` is `True`, also removes from the blocking database.
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+    - `password` (`str`): User's password.
+    - `code` (`str`): Verification code sent to the user's email.
+    - `del_from_blocking` (`bool`, optional): Also remove from blocking database (default: True).
+
 - **block_user(email)**
   - Blocks a user by setting their status to "blocked".
   - **Parameters:**
