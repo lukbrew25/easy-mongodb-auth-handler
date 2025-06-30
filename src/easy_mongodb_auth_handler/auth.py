@@ -311,7 +311,8 @@ class Auth:
             if output:
                 return output
             if user["verification_code"] == code:
-                self.users.update_one({"email": email}, {"$set": {"verified": True}})
+                self.users.update_one({"email": email}, {"$set": {"verified": True,
+                                                                  "verification_code": None}})
                 return {"success": True, "message": self.messages["user_verified"]}
             return {"success": False, "message": self.messages["invalid_reset"]}
         except Exception as error:
@@ -366,6 +367,7 @@ class Auth:
             if output:
                 return output
             if user["verification_code"] == code:
+                self.users.update_one({"email": email}, {"$set": {"verification_code": None}})
                 return {"success": True, "message": self.messages["mfa_success"]}
             return {"success": False, "message": self.messages["invalid_mfa_code"]}
         except Exception as error:
