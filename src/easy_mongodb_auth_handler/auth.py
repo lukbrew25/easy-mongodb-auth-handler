@@ -22,7 +22,7 @@ class Auth:
 
     def __init__(self, mongo_uri, db_name, mail_info=None,
                  blocking=True, readable_errors=True, attempts=6,
-                 delay=10):
+                 delay=10, timeout=5000, certs=certifi.where()):
         """
         initializes the Auth class
 
@@ -46,8 +46,9 @@ class Auth:
         while self.db is None and self.retry_count < self.max_retries:
             try:
                 self.client = MongoClient(mongo_uri,
-                                          serverSelectionTimeoutMS=5000,
-                                          tlsCAFile=certifi.where())
+                                          serverSelectionTimeoutMS=timeout,
+                                          tlsCAFile=certs
+                                          )
                 self.db = self.client[db_name]
             except Exception:
                 self.retry_count += 1

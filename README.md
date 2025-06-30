@@ -73,7 +73,9 @@ auth = Auth(
     blocking=True/False,  # Optional: True to enable user blocking
     readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
     attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
-    delay=10  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
+    delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
+    timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
+    certs=certifi.where()  # Optional: Path to CA bundle for SSL verification (default is certifi's CA bundle)
 )
 ```
 This code initializes the package. 
