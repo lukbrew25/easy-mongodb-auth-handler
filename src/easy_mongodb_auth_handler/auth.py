@@ -479,7 +479,7 @@ class Auth:
                 return {"success": False, "message": self.messages["user_exists"]}
             if user.get("verification_code") != reset_code:
                 return {"success": False, "message": self.messages["invalid_reset"]}
-            if password or user_info.get("password"):
+            if password:
                 if not check_password(user_info, password):
                     return {"success": False, "message": self.messages["invalid_pass"]}
 

@@ -166,7 +166,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `password` (`str`): User's password.
 
 - **verify_reset_code_and_change_email(email, reset_code, new_email, password=None)**
-  - Changes the user's email address after verifying a reset code sent to their email. Optionally uses password verification if the user has a saved password or one is provided.
+  - Changes the user's email address after verifying a reset code sent to their email. Optionally uses password verification if the user has a saved password.
   - **Parameters:**
     - `email` (`str`): User's current email address.
     - `reset_code` (`str`): Reset code sent to the user's email.
