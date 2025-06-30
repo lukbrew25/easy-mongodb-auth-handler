@@ -35,18 +35,18 @@ class Auth:
             delay (int): Delay between connection attempts in seconds.
         """
         self.db = None
-        self.RETRY_COUNT = 0
+        self.retry_count = 0
         if attempts < 1:
             raise ValueError("Number of attempts must be at least 1.")
         if delay < 0:
             raise ValueError("Delay must be a non-negative integer.")
-        self.MAX_RETRIES = attempts
-        while self.db is None and self.RETRY_COUNT < self.MAX_RETRIES:
+        self.max_retries = attempts
+        while self.db is None and self.retry_count < self.max_retries:
             try:
                 self.client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
                 self.db = self.client[db_name]
             except Exception:
-                self.RETRY_COUNT += 1
+                self.retry_count += 1
                 time.sleep(delay)
         if self.db is None:
             raise Exception('Could not connect to MongoDB instance.')
