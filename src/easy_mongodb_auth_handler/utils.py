@@ -9,6 +9,10 @@ from package_functions.message import get_messages
 
 
 class Utils:
+    """
+    A utility class for managing user account
+    - statuses and data in a MongoDB database.
+    """
 
     def __init__(self, mongo_uri, db_name, readable_errors,
                  attempts=6, delay=10, timeout=5000,
