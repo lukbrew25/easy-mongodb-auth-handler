@@ -22,16 +22,19 @@ easy_mongodb_auth_handler/
 │       ├── minlinter.yml
 │       └── python-package.yml
 |── dist/
-|   ├── easy_mongodb_auth_handler-x.x.x-py3-none-any.whl
-|   └── easy_mongodb_auth_handler-x.x.x.tar.gz
+|   ├── easy_mongodb_auth_handler-1.0.10-py3-none-any.whl
+|   └── easy_mongodb_auth_handler-1.0.10.tar.gz
 ├── src/
 │   ├── .gitignore
 │   └── easy_mongodb_auth_handler/
 │       ├── .gitignore
 │       ├── __init__.py
 │       ├── auth.py
-│       ├── message.py
-│       └── utils.py
+│       ├── utils.py
+│       └── package_functions/
+│           ├── __init__.py
+│           ├── func.py
+│           └── message.py
 |── README.md
 |── LICENSE
 |── requirements.txt
