@@ -1,4 +1,4 @@
-name: Pylint
+name: Linter
 
 permissions:
   contents: read

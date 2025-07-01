@@ -1,4 +1,4 @@
-name: Pylint Minimum Package Test
+name: Linter Minimum Package Test
 
 permissions:
   contents: read
