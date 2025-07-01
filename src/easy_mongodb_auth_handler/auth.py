@@ -74,6 +74,13 @@ class Auth:
         self.rate_limit = rate_limit
         self.messages = get_messages(readable_errors)
 
+    def __del__(self):
+        """
+        Ensures the MongoDB client is closed when the Auth instance is deleted.
+        """
+        if hasattr(self, 'client'):
+            self.client.close()
+
     def _find_user(self, email):
         """
         Helper to find a user by email.
