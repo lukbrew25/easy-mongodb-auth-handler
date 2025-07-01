@@ -119,7 +119,7 @@ class Auth:
                 return {"success": False, "message": self.messages["user_blocked"]}
         return None
 
-    def _rate_limit_checker(self, email):
+    def _rate_limit_checker(self, email, ignore_rate_limit):
         """
         Helper to check if a user is rate limited.
 
@@ -129,7 +129,7 @@ class Auth:
         Returns:
             dict: Error message if user is rate limited, None otherwise.
         """
-        if self.rate_limit > 0:
+        if self.rate_limit > 0 and not ignore_rate_limit:
             limit = self.limit.find_one({"email": email})
             if limit:
                 if time.time() - limit["last_action"] < self.rate_limit:
@@ -140,7 +140,8 @@ class Auth:
                 self.limit.insert_one({"email": email, "last_action": time.time()})
         return False
 
-    def register_user_no_verif(self, email, password, custom_data=None):
+    def register_user_no_verif(self, email, password, custom_data=None,
+                               ignore_rate_limit=False):
         """
         registers a user without email verification
 
@@ -148,6 +149,7 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             custom_data: Custom data to save with the user.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -159,7 +161,7 @@ class Auth:
                 return {"success": False, "message": self.messages["invalid_email"]}
             if self._find_user(email):
                 return {"success": False, "message": self.messages["user_exists"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if self.blocking:
                 blocked_user = self._find_blocked_user(email)
@@ -182,7 +184,8 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def reset_password_no_verif(self, email, old_password, new_password):
+    def reset_password_no_verif(self, email, old_password, new_password,
+                                ignore_rate_limit=False):
         """
         resets a user's password without email verification
 
@@ -190,6 +193,7 @@ class Auth:
             email (str): User's email address.
             old_password (str): User's current password.
             new_password (str): New password.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -198,7 +202,7 @@ class Auth:
             user = self._find_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if not check_password(user, old_password):
                 return {"success": False, "message": self.messages["invalid_old_pass"]}
@@ -208,7 +212,8 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def change_email_no_verif(self, email, new_email, password):
+    def change_email_no_verif(self, email, new_email, password,
+                              ignore_rate_limit=False):
         """
         resets a user's email without previous email verification
 
@@ -216,6 +221,7 @@ class Auth:
             email (str): User's email address.
             new_email (str): User's new email.
             password (str): password.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -224,7 +230,7 @@ class Auth:
             user = self._find_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if self.users.find_one({"email": new_email}):
                 return {"success": False, "message": self.messages["user_exists"]}
@@ -235,7 +241,8 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def register_user(self, email, password, custom_data=None):
+    def register_user(self, email, password, custom_data=None,
+                      ignore_rate_limit=False):
         """
         registers a user with email verification
 
@@ -243,6 +250,7 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             custom_data: Custom data to save with the user.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -256,7 +264,7 @@ class Auth:
                 return {"success": False, "message": self.messages["invalid_email"]}
             if self.users.find_one({"email": email}):
                 return {"success": False, "message": self.messages["user_exists"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
 
             if self.blocking:
@@ -283,13 +291,15 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def register_user_no_pass(self, email, custom_data=None):
+    def register_user_no_pass(self, email, custom_data=None,
+                              ignore_rate_limit=False):
         """
         registers a user without password and instead uses email verification.
 
         Args:
             email (str): User's email address.
             custom_data: Custom data to save with the user.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -303,7 +313,7 @@ class Auth:
                 return {"success": False, "message": self.messages["invalid_email"]}
             if self.users.find_one({"email": email}):
                 return {"success": False, "message": self.messages["user_exists"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
 
             if self.blocking:
@@ -329,13 +339,14 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def verify_user(self, email, code):
+    def verify_user(self, email, code, ignore_rate_limit=False):
         """
         verifies a user's email using a verification code.
 
         Args:
             email (str): User's email address.
             code (str): Verification code.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -345,7 +356,7 @@ class Auth:
             output = self._block_checker(email, user)
             if output:
                 return output
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if user["verification_code"] == code:
                 self.users.update_one({"email": email}, {"$set": {"verified": True,
@@ -355,7 +366,8 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def authenticate_user(self, email, password, mfa=False):
+    def authenticate_user(self, email, password, mfa=False,
+                          ignore_rate_limit=False):
         """
         authenticates a user
 
@@ -363,6 +375,7 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             mfa (bool): Enable multi-factor authentication.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -374,7 +387,7 @@ class Auth:
                 return output
             if not user["verified"]:
                 return {"success": False, "message": self.messages["not_verified"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if check_password(user, password):
                 if mfa:
@@ -389,13 +402,14 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def verify_mfa_code(self, email, code):
+    def verify_mfa_code(self, email, code, ignore_rate_limit=False):
         """
         verifies a user's MFA code
 
         Args:
             email (str): User's email address.
             code (str): MFA code.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -405,7 +419,7 @@ class Auth:
             output = self._block_checker(email, user)
             if output:
                 return output
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if user["verification_code"] == code:
                 self.users.update_one({"email": email}, {"$set": {"verification_code": None}})
@@ -414,7 +428,7 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def delete_user(self, email, password, del_from_blocking=True):
+    def delete_user(self, email, password, del_from_blocking=True, ignore_rate_limit=False):
         """
         deletes a user account
 
@@ -422,6 +436,7 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             del_from_blocking (bool): Delete the user from the blocked database.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -431,7 +446,7 @@ class Auth:
             blocked_user = self._find_blocked_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if not check_password(user, password):
                 return {"success": False, "message": self.messages["invalid_pass"]}
@@ -451,7 +466,9 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def delete_user_with_verif(self, email, password, code, del_from_blocking=True):
+    def delete_user_with_verif(self, email, password, code,
+                               del_from_blocking=True,
+                               ignore_rate_limit=False):
         """
         deletes a user account
 
@@ -460,6 +477,7 @@ class Auth:
             password (str): User's password.
             code (str): Verification code.
             del_from_blocking (bool): Delete the user from the blocked database.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -469,7 +487,7 @@ class Auth:
             blocked_user = self._find_blocked_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if not check_password(user, password):
                 return {"success": False, "message": self.messages["invalid_pass"]}
@@ -491,12 +509,13 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def generate_code(self, email):
+    def generate_code(self, email, ignore_rate_limit=False):
         """
         Generates a code and sends it to the user's email.
 
         Args:
             email (str): User's email address.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -507,7 +526,7 @@ class Auth:
             user = self.users.find_one({"email": email})
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             reset_code = generate_secure_code()
             self.users.update_one({"email": email}, {"$set": {"verification_code": reset_code}})
@@ -516,7 +535,8 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def verify_reset_code_and_reset_password(self, email, reset_code, new_password):
+    def verify_reset_code_and_reset_password(self, email, reset_code, new_password,
+                                             ignore_rate_limit=False):
         """
         verifies a reset code and resets the user's password
 
@@ -524,6 +544,7 @@ class Auth:
             email (str): User's email address.
             reset_code (str): Reset code.
             new_password (str): New password.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -532,7 +553,7 @@ class Auth:
             user = self.users.find_one({"email": email})
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if user.get("verification_code") != reset_code:
                 return {"success": False, "message": self.messages["invalid_reset"]}
@@ -544,7 +565,8 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def verify_reset_code_and_change_email(self, email, reset_code, new_email, password=None):
+    def verify_reset_code_and_change_email(self, email, reset_code, new_email,
+                                           password=None, ignore_rate_limit=False):
         """
         verifies a reset code and changes the user's email
 
@@ -553,6 +575,7 @@ class Auth:
             reset_code (str): Reset code.
             new_email (str): New email address.
             password (str, optional): User's password for verification if included.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -562,7 +585,7 @@ class Auth:
             user_info = self._find_user(email)
             if not user:
                 return {"success": False, "message": self.messages["user_not_found"]}
-            if self._rate_limit_checker(email):
+            if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
             if self.users.find_one({"email": new_email}):
                 return {"success": False, "message": self.messages["user_exists"]}

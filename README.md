@@ -122,6 +122,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.register_user_no_verif(email, password, custom_data=None)**
   - Registers a user without email verification.
@@ -129,18 +130,21 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.register_user_no_pass(email, custom_data=None)**
   - Registers a user without a password and sends a verification code via email.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.verify_user(email, code)**
   - Verifies a user by checking the provided verification code.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `code` (`str`): Verification code sent to the user.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### Authentication
 
@@ -150,18 +154,21 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
     - `mfa` (`bool`, optional): If set to `True`, it will send the user a six-digit code to their email for multi-factor authentication. Defaults to `False`.
-- 
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
+
 - **auth.verify_mfa_code(email, code)**
   - Verifies the multi-factor authentication code sent to the user's email. Can be used in conjunction with register_user_no_pass(), verify_user(), and generate_code() for passwordless sign-in.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `code` (`str`): Six-digit code sent to the user's email.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### MFA Code Management
 - **auth.generate_code(email)**
   - Generates and emails a code to the user. Call before password and email resets or when signing in without password.
   - **Parameters:**
     - `email` (`str`): User's email address.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### Password Management
 
@@ -171,6 +178,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `old_password` (`str`): User's current password.
     - `new_password` (`str`): New password to set.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.verify_reset_code_and_reset_password(email, reset_code, new_password)**
   - Verifies a password reset code and resets the user's password.
@@ -178,6 +186,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's email address.
     - `reset_code` (`str`): Code sent to the user's email.
     - `new_password` (`str`): New password to set.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### Email Management
 
@@ -187,6 +196,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `email` (`str`): User's current email address.
     - `new_email` (`str`): New email address to set.
     - `password` (`str`): User's password.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.verify_reset_code_and_change_email(email, reset_code, new_email, password=None)**
   - Changes the user's email address after verifying a reset code sent to their email. Optionally uses password verification if the user has a saved password.
@@ -195,6 +205,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `reset_code` (`str`): Reset code sent to the user's email.
     - `new_email` (`str`): New email address to set.
     - `password` (`str`, optional): User's password for additional verification.
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### User Deletion & Blocking
 When a user is blocked, they cannot log in or perform any actions that require authentication.
@@ -205,6 +216,7 @@ When a user is blocked, they cannot log in or perform any actions that require a
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
     - `del_from_blocking` (`bool`, optional): Also remove from blocking database (default: True).
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.delete_user_with_verif(email, password, code, del_from_blocking=True)**
   - Deletes a user from the database if credentials and code match. If `del_from_blocking` is `True`, also removes from the blocking database.
@@ -213,6 +225,7 @@ When a user is blocked, they cannot log in or perform any actions that require a
     - `password` (`str`): User's password.
     - `code` (`str`): Verification code sent to the user's email.
     - `del_from_blocking` (`bool`, optional): Also remove from blocking database (default: True).
+    - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **utils.block_user(email)**
   - Blocks a user by setting their status to "blocked".
