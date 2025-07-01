@@ -22,8 +22,8 @@ easy_mongodb_auth_handler/
 │       ├── minlinter.yml
 │       └── python-package.yml
 |── dist/
-|   ├── easy_mongodb_auth_handler-1.0.10-py3-none-any.whl
-|   └── easy_mongodb_auth_handler-1.0.10.tar.gz
+|   ├── easy_mongodb_auth_handler-1.0.11-py3-none-any.whl
+|   └── easy_mongodb_auth_handler-1.0.11.tar.gz
 ├── src/
 │   ├── .gitignore
 │   └── easy_mongodb_auth_handler/
@@ -58,6 +58,11 @@ easy_mongodb_auth_handler/
 - Saving custom per user data
 - User blocking functionality
 - Email change with or without verification
+- Multi-factor authentication (MFA) support
+- Rate limiting to prevent abuse
+- Utility functions for user status management and data retrieval
+- Detailed error handling with readable messages or numeric codes
+- Support for custom user data storage in a flexible format
 
 ## Usage
 
@@ -65,8 +70,8 @@ easy_mongodb_auth_handler/
 from easy_mongodb_auth_handler import Auth, Utils
 
 auth = Auth(
-    mongo_uri="mongodb://localhost:27017",
-    db_name="mydb",
+    mongo_uri="mongodb://localhost:27017", # MongoDB URI for your database (Must match the Utils module's mongo_uri if using both modules)
+    db_name="auth", # Database name for user data (Must match the Utils module's db_name if using both modules)
     mail_info={
         "server": "smtp.example.com",
         "port": 587,
@@ -83,8 +88,8 @@ auth = Auth(
 )
 
 utils = Utils(
-    mongo_uri="mongodb://localhost:27017",
-    db_name="mydb",
+    mongo_uri="mongodb://localhost:27017", # Must match the Auth module's mongo_uri
+    db_name="auth", # Must match the Auth module's db_name
     attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
     readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
     delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
@@ -98,6 +103,7 @@ Each module can be initialized separately if you only need specific functionalit
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
 The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request).
 Both blocking and rate limiting are optional and only affect functions in the Auth module.
+The data can be easily accessed externally by connecting to the same mongodb instance, navigating to the database passed to the `db_name` argument, and then accessing the `users`, `blocked`, and `limit` collections.
 All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format):
 {
     "success": True/False, 
