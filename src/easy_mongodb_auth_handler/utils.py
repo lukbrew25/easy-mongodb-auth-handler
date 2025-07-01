@@ -1,115 +1,244 @@
 """
-Utility functions for the easy_mongodb_auth_handler package.
+This module provides utility functions for managing user accounts in a MongoDB database.
 """
 
-import secrets
-import re
-import smtplib
-from email.mime.text import MIMEText
-import bcrypt
+import time
+from pymongo import MongoClient
+import certifi
+from .message import get_messages
 
 
-def check_password(user, password):
-    """
-    Helper to verify a user's password.
+class Utils:
 
-    Args:
-        user (dict): User document.
-        password (str): Password to verify.
+    def __init__(self, mongo_uri, db_name, readable_errors,
+                 attempts=6, delay=10, timeout=5000,
+                 certs=certifi.where()):
+        """
+        Initializes the Utils class to connect to a MongoDB instance.
+        This class provides methods to manage user accounts, including blocking,
+        unblocking, and checking user status.
 
-    Returns:
-        bool: True if the password matches, False otherwise.
-    """
-    return verify_password(password, user["password"])
+        Args:
+            mongo_uri (str): MongoDB connection URI.
+            db_name (str): Name of the database to connect to.
+            readable_errors (bool): If True, returns user-friendly error messages.
+            attempts (int): Number of connection attempts before giving up.
+            delay (int): Delay in seconds between connection attempts.
+            timeout (int): Timeout for server selection in milliseconds.
+            certs (str): Path to the CA certificates file for TLS connections.
 
+        """
+        self.db = None
+        self.retry_count = 0
+        if attempts < 1:
+            raise ValueError("Number of attempts must be at least 1.")
+        if delay < 0:
+            raise ValueError("Delay must be a non-negative integer.")
+        self.max_retries = attempts
+        while self.db is None and self.retry_count < self.max_retries:
+            try:
+                self.client = MongoClient(mongo_uri,
+                                          serverSelectionTimeoutMS=timeout,
+                                          tlsCAFile=certs
+                                          )
+                self.db = self.client[db_name]
+            except Exception:
+                self.retry_count += 1
+                time.sleep(delay)
+        if self.db is None:
+            raise Exception('Could not connect to MongoDB instance.')
+        self.users = self.db["users"]
+        self.blocked = self.db["blocked"]
+        self.limit = self.db["limit"]
+        self.messages = get_messages(readable_errors)
 
-def hash_password(password):
-    """
-    Hashes a password using bcrypt.
+    def _find_user(self, email):
+        """
+        Helper to find a user by email.
 
-    Args:
-        password (str): The password to hash.
+        Args:
+            email (str): User's email address.
 
-    Returns:
-        str: The hashed password.
-    """
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode(), salt)
-    return hashed.decode()
+        Returns:
+            dict: User document if found, None otherwise.
+        """
+        return self.users.find_one({"email": email})
 
+    def _find_blocked_user(self, email):
+        """
+        Helper to find a user's entry in the blocked database by email.
 
-def verify_password(password, hashed):
-    """
-    verifies a password against a hashed password
+        Args:
+            email (str): User's email address.
 
-    Args:
-        password (str): The plain text password.
-        hashed (str): The hashed password.
+        Returns:
+            dict: User document if found, None otherwise.
+        """
+        return self.blocked.find_one({"email": email})
 
-    Returns:
-        bool: True if the password matches, False otherwise.
-    """
-    return bcrypt.checkpw(password.encode(), hashed.encode())
+    def block_user(self, email):
+        """
+        Blocks a user by changing their entry to blocked.
 
+        Args:
+            email (str): User's email address.
 
-def generate_secure_code(length=6):
-    """
-    Generates a secure alphanumeric code.
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
+            if not user or not blocked_user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            self.blocked.update_one({"email": email}, {"$set": {"blocked": True}})
+            return {"success": True, "message": self.messages["user_blocked"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
-    Args:
-        length (int): The length of the code. Default is 6.
+    def unblock_user(self, email):
+        """
+        Unblocks a user by changing their entry to unblocked.
 
-    Returns:
-        str: The generated code.
-    """
-    return ''.join(secrets.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(length))
+        Args:
+            email (str): User's email address.
 
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
+            if not user or not blocked_user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            self.blocked.update_one({"email": email}, {"$set": {"blocked": False}})
+            return {"success": True, "message": self.messages["user_unblocked"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
-def validate_email(email):
-    """
-    Validates the format of an email address using a regular expression.
+    def is_blocked(self, email):
+        """
+        Checks if a user is blocked.
 
-    Args:
-        email (str): The email address to validate.
+        Args:
+            email (str): User's email address.
 
-    Returns:
-        bool: True if the email is valid, False otherwise.
-    """
-    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    return re.match(email_regex, email) is not None
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            blocked_user = self._find_blocked_user(email)
+            if not user or not blocked_user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            if blocked_user["blocked"]:
+                return {"success": True, "message": self.messages["user_blocked"]}
+            return {"success": False, "message": self.messages["not_blocked"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
+    def is_verified(self, email):
+        """
+        Checks if a user is verified.
 
-def send_verification_email(mail_info, recipient_email, verification_code):
-    """
-    sends a verification email with a specified code to the recipient
+        Args:
+            email (str): User's email address.
 
-    Args:
-        mail_info (dict): The server address, port, email address, and password.
-        recipient_email (str): The recipient's email address.
-        verification_code (str): The verification code to send.
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self._find_user(email)
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            if user["verified"]:
+                return {"success": True, "message": self.messages["user_verified"]}
+            return {"success": False, "message": self.messages["not_verified"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
-    Raises:
-        ValueError: If mail server settings are incomplete.
-        RuntimeError: If sending the email fails.
-    """
-    mail_server = mail_info.get("server")
-    mail_port = mail_info.get("port")
-    mail_username = mail_info.get("username")
-    mail_password = mail_info.get("password")
-    if not all([mail_server, mail_port, mail_username, mail_password]):
-        raise ValueError("Mail server settings are incomplete or missing.")
+    def get_cust_usr_data(self, email):
+        """
+        retrieves custom user data
+        Args:
+            email (str): User's email address.
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self.users.find_one({"email": email})
 
-    subject = "Your Verification Code"
-    body = f"Your verification code is: {verification_code}"
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = mail_username
-    msg["To"] = recipient_email
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            custom_data = user.get("custom_data")
+            return {"success": True, "message": custom_data}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
-    try:
-        with smtplib.SMTP(mail_server, mail_port) as server:
-            server.starttls()
-            server.login(mail_username, mail_password)
-            server.sendmail(mail_username, recipient_email, msg.as_string())
-    except Exception as e:
-        raise RuntimeError(f"Failed to send email: {e}") from e
+    def get_some_cust_usr_data(self, email, field):
+        """
+        retrieves specific custom user data
+        Args:
+            email (str): User's email address.
+            field (str): Specific field to retrieve.
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self.users.find_one({"email": email})
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            custom_data = user.get("custom_data")
+            if custom_data:
+                custom_data = user.get("custom_data").get(field)
+            return {"success": True, "message": custom_data}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def replace_usr_data(self, email, custom_data):
+        """
+        replaces custom user data
+        Args:
+            email (str): User's email address.
+            custom_data: New custom data to save with the user.
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self.users.find_one({"email": email})
+
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+
+            self.users.update_one(
+                {"email": email}, {"$set": {"custom_data": custom_data}}
+            )
+            return {"success": True, "message": self.messages["data_changed"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def update_usr_data(self, email, field, custom_data):
+        """
+        updates a specific field in the custom user data
+        Args:
+            email (str): User's email address.
+            field (str): Field to update.
+            custom_data: New value for the field.
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            user = self.users.find_one({"email": email})
+
+            if not user:
+                return {"success": False, "message": self.messages["user_not_found"]}
+            temp_check = user.get("custom_data")
+            if not temp_check or field not in temp_check:
+                return {"success": False, "message": self.messages["field_not_found"]}
+
+            self.users.update_one(
+                {"email": email}, {"$set": {f"custom_data.{field}": custom_data}}
+            )
+            return {"success": True, "message": self.messages["data_changed"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}

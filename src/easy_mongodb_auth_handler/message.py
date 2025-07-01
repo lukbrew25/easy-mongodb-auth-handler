@@ -40,7 +40,8 @@ def get_messages(usr_readable):
             "invalid_old_pass": "Invalid old password.",
             "invalid_pass": "Invalid password.",
             "invalid_creds": "Invalid credentials.",
-            "not_found_blocked": "User is not found in blocked database."
+            "not_found_blocked": "User is not found in blocked database.",
+            "rate_limited": "Rate limit exceeded. Please try again later."
         }
     else:
         messages = {
@@ -56,6 +57,7 @@ def get_messages(usr_readable):
             "not_blocked": 301,
             "not_verified": 302,
             "error": 400,
+            "rate_limited": 401,
             "user_exists": 402,
             "user_blocked": 403,
             "user_not_found": 404,
