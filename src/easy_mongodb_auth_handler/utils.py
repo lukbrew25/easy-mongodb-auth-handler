@@ -5,7 +5,7 @@ This module provides utility functions for managing user accounts in a MongoDB d
 import time
 from pymongo import MongoClient
 import certifi
-from package_functions.message import get_messages
+from .package_functions.message import get_messages
 
 
 class Utils:

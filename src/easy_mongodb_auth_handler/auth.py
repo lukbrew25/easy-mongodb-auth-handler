@@ -5,14 +5,14 @@ Authentication and user management for the easy_mongodb_auth_handler package.
 import time
 from pymongo import MongoClient
 import certifi
-from package_functions.func import (
+from .package_functions.func import (
     validate_email,
     hash_password,
     generate_secure_code,
     send_verification_email,
     check_password
 )
-from package_functions.message import get_messages
+from .package_functions.message import get_messages
 
 
 class Auth:
