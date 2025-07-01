@@ -135,8 +135,7 @@ class Auth:
                 if time.time() - limit["last_action"] < self.rate_limit:
                     self.limit.update_one({"email": email}, {"$set": {"last_action": time.time()}})
                     return True
-                else:
-                    self.limit.update_one({"email": email}, {"$set": {"last_action": time.time()}})
+                self.limit.update_one({"email": email}, {"$set": {"last_action": time.time()}})
             else:
                 self.limit.insert_one({"email": email, "last_action": time.time()})
         return False
