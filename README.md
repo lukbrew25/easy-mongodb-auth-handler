@@ -271,8 +271,9 @@ If the method is meant to return data, it will do so in the following format:
 ## Requirements
 
 - Python >= 3.8
-- pymongo >= 4.0.0
 - bcrypt >= 4.0.0
+- pymongo >= 4.0.0
+- certifi >= 2025.6.15
 
 ## Return code translation
 These codes are returned by the functions in the package if `readable_errors` is set to `False`.
