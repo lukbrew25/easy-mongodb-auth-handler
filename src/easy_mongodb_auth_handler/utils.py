@@ -53,7 +53,6 @@ class Utils:
             raise Exception('Could not connect to MongoDB instance.')
         self.users = self.db["users"]
         self.blocked = self.db["blocked"]
-        self.limit = self.db["limit"]
         self.messages = get_messages(readable_errors)
 
     def _find_user(self, email):
