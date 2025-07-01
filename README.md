@@ -90,7 +90,7 @@ utils = Utils(
 )
 ```
 This code initializes the modules. The Auth module is used for most functions. The Utils module is used for utility functions that are designed for user management, data retrieval, and status checks that are not intended to directly process user input.
-The mail arguments are not required, but needed to use verification code functionality. 
+The mail arguments are not required but needed to use verification code functionality. 
 Each module can be initialized separately if you only need specific functionalities of one module. Make sure to use the same mongo uri and db name for both modules.
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
 The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request).
