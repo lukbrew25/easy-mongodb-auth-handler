@@ -124,7 +124,6 @@ def send_verification_email(mail_info, recipient_email, verification_code,
         msg["To"] = recipient_email
 
         # Create plain text version by removing HTML tags (simple approach)
-        import re
         plain_text = re.sub(r'<[^>]+>', '', final_body)
         plain_text = re.sub(r'\s+', ' ', plain_text).strip()
 
