@@ -31,6 +31,7 @@ easy_mongodb_auth_handler/
 │       ├── __init__.py
 │       ├── auth.py
 │       ├── utils.py
+│       ├── core_db.py
 │       └── package_functions/
 │           ├── __init__.py
 │           ├── func.py
@@ -67,11 +68,11 @@ easy_mongodb_auth_handler/
 ## Usage
 
 ```
-from easy_mongodb_auth_handler import Auth, Utils
+from easy_mongodb_auth_handler import Auth, Utils, CoreDB
 
 auth = Auth(
-    mongo_uri="mongodb://localhost:27017", # MongoDB URI for your database (Must match the Utils module's mongo_uri if using both modules)
-    db_name="auth", # Database name for user data (Must match the Utils module's db_name if using both modules)
+    mongo_uri="mongodb://localhost:27017", # MongoDB URI for your database (Must match the other modules' mongo_uri if using other modules)
+    db_name="auth", # Database name for user data (Must match the other modules' db_name if using other modules)
     mail_info={
         "server": "smtp.example.com",
         "port": 587,
@@ -96,15 +97,25 @@ utils = Utils(
     timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
     certs=certifi.where()  # Optional: Path to CA bundle for SSL verification (default is certifi's CA bundle)
 )
+
+coredb = CoreDB(
+    mongo_uri="mongodb://localhost:27017", # Must match the Auth module's mongo_uri
+    db_name="auth", # Must match the Auth module's db_name
+    attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
+    readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
+    delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
+    timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
+    certs=certifi.where()  # Optional: Path to CA bundle for SSL verification (default is certifi's CA bundle)
+)
 ```
-This code initializes the modules. The Auth module is used for most functions. The Utils module is used for utility functions that are designed for user management, data retrieval, and status checks that are not intended to directly process user input.
+This code initializes the modules. The Auth module is used for most functions. The Utils module is used for utility functions that are designed for user management, data retrieval, and status checks that are not intended to directly process user input. The CoreDB module is used for direct database interactions, such as manually resetting or deleting the db and collections.
 The mail arguments are not required but needed to use verification code functionality. 
-Each module can be initialized separately if you only need specific functionalities of one module. Make sure to use the same mongo uri and db name for both modules.
+Each module can be initialized separately if you only need specific functionalities of one or two module(s). Make sure to use the same mongo uri and db name for all modules.
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
 The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request).
 Both blocking and rate limiting are optional and only affect functions in the Auth module.
 The data can be easily accessed externally by connecting to the same mongodb instance, navigating to the database passed to the `db_name` argument, and then accessing the `users`, `blocked`, and `limit` collections.
-All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format):
+All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format) EXCEPT for the CoreDB methods, which have no returns.:
 {
     "success": True/False, 
     "message": "specific message or error code"
@@ -280,6 +291,71 @@ If the method is meant to return data, it will do so in the following format:
     - `email` (`str`): User's email address.
     - `field` (`str`): Dictionary name to update.
     - `custom_data` (`any`): New value for the field.
+
+### Module class methods
+
+- **auth.__del__(self)**
+  - Closes the MongoDB connection when the module instance is deleted.
+
+- **utils.__del__(self)**
+  - Closes the MongoDB connection when the module instance is deleted.
+
+- **coredb.__del__(self)**
+  - Closes the MongoDB connection when the module instance is deleted.
+
+### Database Management
+The CoreDB module provides functions for managing the MongoDB database and its collections. 
+It allows you to create, delete, and reset collections as needed.
+These functions have no return values, but they will raise exceptions if the operations fail.
+The necessary collections and database will be created automatically when any of the modules are initialized, so you do not need to call these functions unless you want to reset, delete, or re-create the collections or database.
+
+IT IS RECOMMENDED TO RUN THESE FUNCTIONS IN A TRY EXCEPT BLOCK TO HANDLE ANY EXCEPTIONS.
+BE CAREFUL when using these functions, as they WILL delete data permanently.
+
+- **coredb.remove_users_collection()**
+  - Deletes the `users` collection from the database.
+
+- **coredb.remove_blocked_collection()**
+  - Deletes the `blocked` collection from the database.
+
+- **coredb.remove_limit_collection()**
+  - Deletes the `limit` collection from the database.
+
+- **coredb.remove_all_collections()**
+  - Deletes all collections from the database.
+
+- **coredb.create_users_collection()**
+  - Creates the `users` collection in the database.
+  
+- **coredb.create_blocked_collection()**
+  - Creates the `blocked` collection in the database.
+
+- **coredb.create_limit_collection()**
+  - Creates the `limit` collection in the database.
+
+- **coredb.create_all_collections()**
+  - Creates all collections (`users`, `blocked`, `limit`) in the database.
+
+- **coredb.reset_users_collection()**
+  - Resets the `users` collection by deleting the collection and re-creating it.
+
+- **coredb.reset_blocked_collection()**
+  - Resets the `blocked` collection by deleting the collection and re-creating it.
+
+- **coredb.reset_limit_collection()**
+  - Resets the `limit` collection by deleting the collection and re-creating it.
+
+- **coredb.reset_all_collections()**
+  - Resets all collections (`users`, `blocked`, `limit`) by deleting and re-creating them.
+
+- **coredb.remove_db()**
+  - Deletes the entire database.
+
+- **coredb.create_db()**
+  - Creates the database without any collections.
+
+- **coredb.reset_db()**
+  - Resets the database by deleting it, re-creating it, and creating all three collections.
 
 ## Requirements
 
