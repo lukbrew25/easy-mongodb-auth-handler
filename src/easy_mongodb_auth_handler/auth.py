@@ -153,7 +153,7 @@ class Auth:
             ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
-            dict: Error message if user is rate limited, None otherwise.
+            bool: True if the user is rate limited, False otherwise.
         """
         if self.rate_limit > 0 and not ignore_rate_limit:
             limit = self.limit.find_one({"email": email})
