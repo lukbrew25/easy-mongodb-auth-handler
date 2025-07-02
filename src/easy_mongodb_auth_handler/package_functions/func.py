@@ -80,7 +80,7 @@ def validate_email(email):
     return re.match(email_regex, email) is not None
 
 
-def send_verification_email(mail_info, 
+def send_verification_email(mail_info,
                             recipient_email, verification_code,
                             subject=None, body=None):
     """
@@ -115,8 +115,9 @@ def send_verification_email(mail_info,
     final_body = body.replace("{verifcode}", verification_code)
 
     # Check if body contains HTML tags to determine content type
-    is_html = any(tag in final_body.lower() for tag in ['<html>', '<body>', '<p>', '<br>', '<div>', '<span>'])
-
+    is_html = any(tag in final_body.lower() for 
+                  tag in ['<html>', '<body>', '<p>', '<br>', 
+                          '<div>', '<span>'])
     if is_html:
         # Create multipart message for HTML content
         msg = MIMEMultipart('alternative')
