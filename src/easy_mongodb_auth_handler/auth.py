@@ -21,7 +21,7 @@ class Auth:
     """
 
     def __init__(self, mongo_uri, db_name, mail_info=None,
-                 blocking=True, rate_limit=0, readable_errors=True,
+                 blocking=True, rate_limit=0, penalty=0, readable_errors=True,
                  attempts=6, delay=10, timeout=5000,
                  certs=certifi.where()):
         """
@@ -34,6 +34,7 @@ class Auth:
                 'server', 'port', 'username', 'password'.
             blocking (bool): Enable user blocking.
             rate_limit (int): Rate limit for user actions in seconds.
+            penalty (int): Penalty time in seconds for rate limiting.
             readable_errors (bool): Use readable error messages.
             attempts (int): Number of connection attempts.
             delay (int): Delay between connection attempts in seconds.
@@ -73,6 +74,7 @@ class Auth:
         self.blocking = blocking
         self.rate_limit = rate_limit
         self.messages = get_messages(readable_errors)
+        self.penalty = penalty
 
     def __del__(self):
         """
@@ -132,6 +134,7 @@ class Auth:
 
         Args:
             email (str): User's email address.
+            ignore_rate_limit (bool): Ignore rate limiting for this action.
 
         Returns:
             dict: Error message if user is rate limited, None otherwise.
@@ -139,10 +142,12 @@ class Auth:
         if self.rate_limit > 0 and not ignore_rate_limit:
             limit = self.limit.find_one({"email": email})
             if limit:
-                if time.time() - limit["last_action"] < self.rate_limit:
+                if limit["last_action"] < time.time():
                     self.limit.update_one({"email": email}, {"$set": {"last_action": time.time()}})
+                if time.time() - limit["last_action"] < self.rate_limit:
+                    self.limit.update_one({"email": email}, {"$set": {"last_action":
+                                                                          int(time.time()) + self.penalty}})
                     return True
-                self.limit.update_one({"email": email}, {"$set": {"last_action": time.time()}})
             else:
                 self.limit.insert_one({"email": email, "last_action": time.time()})
         return False

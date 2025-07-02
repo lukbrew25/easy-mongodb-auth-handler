@@ -80,7 +80,8 @@ auth = Auth(
         "password": "your_email_password"
     }, # Optional: Include if using email verification
     blocking=True/False,  # Optional: True to enable user blocking
-    rate_limiting=0 # Optional: Set to 0 to disable rate limiting, or a positive integer to enable rate limiting with that cooldown period in seconds between user requests.
+    rate_limiting=0, # Optional: Set to 0 to disable rate limiting, or a positive integer to enable rate limiting with that cooldown period in seconds between user requests.
+    penalty=0,  # Optional: Set to 0 to disable rate limiting penalty, or a positive integer to set the penalty in seconds for rate limiting. If rate limiting is enabled, this is the penalty in seconds added to the cooldown period for violating the cooldown.
     readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
     attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
     delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
