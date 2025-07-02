@@ -106,7 +106,7 @@ def send_verification_email(mail_info,
 
     # Use default values if custom ones are not provided
     if subject is None:
-        subject = "Your Verification Code"
+        subject = "Verification Code"
     if body is None:
         body = "Your verification code is: {verifcode}"
 
