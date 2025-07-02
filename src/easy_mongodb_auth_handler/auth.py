@@ -144,7 +144,7 @@ class Auth:
                 return {"success": False, "message": self.messages["user_blocked"]}
         return None
 
-    def _rate_limit_checker(self, email, ignore_rate_limit):
+    def _rate_limit_checker(self, email, ignore_rate_limit, skip_update=False):
         """
         Helper to check if a user is rate limited.
 
@@ -158,16 +158,68 @@ class Auth:
         if self.rate_limit > 0 and not ignore_rate_limit:
             limit = self.limit.find_one({"email": email})
             if limit:
-                if limit["last_action"] < time.time():
+                if limit["last_action"] < time.time() and not skip_update:
                     self.limit.update_one({"email": email}, {"$set": {"last_action": time.time()}})
                 if time.time() - limit["last_action"] < self.rate_limit:
-                    self.limit.update_one({
-                        "email": email}, {
-                        "$set": {"last_action": int(time.time()) + self.penalty}})
+                    if not skip_update:
+                        self.limit.update_one({
+                            "email": email}, {
+                            "$set": {"last_action": int(time.time()) + self.penalty}})
                     return True
             else:
-                self.limit.insert_one({"email": email, "last_action": time.time()})
+                if not skip_update:
+                    self.limit.insert_one({"email": email, "last_action": time.time()})
         return False
+
+    def is_rate_limited(self, email):
+        """
+        Checks if a user is rate limited.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            if self._rate_limit_checker(email, ignore_rate_limit=False, skip_update=True):
+                return {"success": False, "message": self.messages["rate_limited"]}
+            return {"success": True, "message": self.messages["success"]}
+        except Exception as error:
+            return {"success": True, "message": str(error)}
+
+    def check_and_update_rate_limit(self, email):
+        """
+        Checks and updates the rate limit for a user.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            if self._rate_limit_checker(email, ignore_rate_limit=False):
+                return {"success": False, "message": self.messages["rate_limited"]}
+            return {"success": True, "message": self.messages["success"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
+
+    def update_rate_limit(self, email):
+        """
+        Updates the last request time for a user.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            dict: Success status and message.
+        """
+        try:
+            self._rate_limit_checker(email, ignore_rate_limit=False)
+            return {"success": True, "message": self.messages["success"]}
+        except Exception as error:
+            return {"success": False, "message": str(error)}
 
     def register_user_no_verif(self, email, password, custom_data=None,
                                ignore_rate_limit=False):

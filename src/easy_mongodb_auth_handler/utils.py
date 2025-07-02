@@ -53,6 +53,7 @@ class Utils:
             raise Exception('Could not connect to MongoDB instance.')
         self.users = self.db["users"]
         self.blocked = self.db["blocked"]
+        self.limit = self.db["limit"]
         self.messages = get_messages(readable_errors)
 
     def __del__(self):
@@ -85,6 +86,27 @@ class Utils:
             dict: User document if found, None otherwise.
         """
         return self.blocked.find_one({"email": email})
+
+    def time_since_request(self, email):
+        """
+        Checks the time since the last request for a user.
+
+        Args:
+            email (str): User's email address.
+
+        Returns:
+            int: Time in seconds since the last request, or -1 if not found/error.
+        """
+        try:
+            limit = self.limit.find_one({"email": email})
+            if limit:
+                last_request_time = limit.get("last_action")
+                if last_request_time:
+                    time_since = time.time() - last_request_time
+                    return int(time_since)
+            return -1
+        except Exception:
+            return -1
 
     def block_user(self, email):
         """
@@ -140,12 +162,12 @@ class Utils:
             user = self._find_user(email)
             blocked_user = self._find_blocked_user(email)
             if not user or not blocked_user:
-                return {"success": False, "message": self.messages["user_not_found"]}
+                return {"success": True, "message": self.messages["user_not_found"]}
             if blocked_user["blocked"]:
                 return {"success": True, "message": self.messages["user_blocked"]}
             return {"success": False, "message": self.messages["not_blocked"]}
         except Exception as error:
-            return {"success": False, "message": str(error)}
+            return {"success": True, "message": str(error)}
 
     def is_verified(self, email):
         """

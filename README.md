@@ -258,13 +258,37 @@ When a user is blocked, they cannot log in or perform any actions that require a
   - **Parameters:**
     - `email` (`str`): User's email address.
 
+### User Status Checks
+
 - **utils.is_blocked(email)**
-  - Checks if a user is blocked.
+  - Checks if a user is blocked (returns status in success portion of dict).
   - **Parameters:**
     - `email` (`str`): User's email address.
 
 - **utils.is_verified(email)**
-  - Checks if a user is verified.
+  - Checks if a user is verified (returns status in success portion of dict).
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+
+### Rate Limiting
+
+- **utils.time_since_request(email)**
+  - Returns the time in seconds since the last request for a user or -1 if error/not found. Only returns int.
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+
+- **auth.is_rate_limited(email)**
+  - Checks if a user is currently rate-limited (returns status in success portion of dict).
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+
+- **auth.update_rate_limit(email)**
+  - Updates the rate limit for a user by setting the time of the last request to current time unless user is under cooldown penalty. Does not return rate limit state - only success of operation.
+  - **Parameters:**
+    - `email` (`str`): User's email address.
+
+- **auth.check_and_update_rate_limit(email)**
+  - Checks if a user is rate-limited (returns status in success portion of dict like most other functions) and updates the last request time to now unless the user is under cooldown penalty.
   - **Parameters:**
     - `email` (`str`): User's email address.
 
