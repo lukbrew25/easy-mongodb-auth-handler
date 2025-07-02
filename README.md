@@ -133,15 +133,16 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
 
 ### User Registration & Verification
 
-- **auth.register_user(email, password, custom_data=None)**
+- **auth.register_user(email, password, custom_data=None, cust_length=None, ignore_rate_limit=False)**
   - Registers a user and sends a verification code via email.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
+    - `cust_length` (`int`, optional): Length of the verification code. If None, defaults to the module's `code_length` setting.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.register_user_no_verif(email, password, custom_data=None)**
+- **auth.register_user_no_verif(email, password, custom_data=None, ignore_rate_limit=False)**
   - Registers a user without email verification.
   - **Parameters:**
     - `email` (`str`): User's email address.
@@ -149,14 +150,15 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.register_user_no_pass(email, custom_data=None)**
+- **auth.register_user_no_pass(email, custom_data=None, cust_length=None, ignore_rate_limit=False)**
   - Registers a user without a password and sends a verification code via email.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `custom_data` (`any`, optional): Additional user info to store. If None, defaults to an empty dictionary.
+    - `cust_length` (`int`, optional): Length of the verification code. If None, defaults to the module's `code_length` setting.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.verify_user(email, code)**
+- **auth.verify_user(email, code, ignore_rate_limit=False)**
   - Verifies a user by checking the provided verification code.
   - **Parameters:**
     - `email` (`str`): User's email address.
@@ -165,15 +167,16 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
 
 ### Authentication
 
-- **auth.authenticate_user(email, password)**
+- **auth.authenticate_user(email, password, mfa=False, cust_length=None, ignore_rate_limit=False)**
   - Authenticates a user. Requires the user to be verified.
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
     - `mfa` (`bool`, optional): If set to `True`, it will send the user a numeric code to their email for multi-factor authentication. Defaults to `False`.
+    - `cust_length` (`int`, optional): Length of the verification code for MFA. If None, defaults to the module's `code_length` setting.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.verify_mfa_code(email, code)**
+- **auth.verify_mfa_code(email, code, ignore_rate_limit=False)**
   - Verifies the multi-factor authentication code sent to the user's email. Can be used in conjunction with register_user_no_pass(), verify_user(), and generate_code() for passwordless sign-in.
   - **Parameters:**
     - `email` (`str`): User's email address.
@@ -181,15 +184,16 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### MFA Code Management
-- **auth.generate_code(email)**
+- **auth.generate_code(email, cust_length=None, ignore_rate_limit=False)**
   - Generates and emails a code to the user. Call before password and email resets or when signing in without password.
   - **Parameters:**
     - `email` (`str`): User's email address.
+    - `cust_length` (`int`, optional): Length of the verification code. If None, defaults to the module's `code_length` setting.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### Password Management
 
-- **auth.reset_password_no_verif(email, old_password, new_password)**
+- **auth.reset_password_no_verif(email, old_password, new_password, ignore_rate_limit=False)**
   - Resets the user's password after verifying the old password. No email code required.
   - **Parameters:**
     - `email` (`str`): User's email address.
@@ -197,7 +201,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `new_password` (`str`): New password to set.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.verify_reset_code_and_reset_password(email, reset_code, new_password)**
+- **auth.verify_reset_code_and_reset_password(email, reset_code, new_password, ignore_rate_limit=False)**
   - Verifies a password reset code and resets the user's password.
   - **Parameters:**
     - `email` (`str`): User's email address.
@@ -207,7 +211,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
 
 ### Email Management
 
-- **auth.change_email_no_verif(email, new_email, password)**
+- **auth.change_email_no_verif(email, new_email, password, ignore_rate_limit=False)**
   - Changes the user's email address without requiring email verification.
   - **Parameters:**
     - `email` (`str`): User's current email address.
@@ -215,7 +219,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
     - `password` (`str`): User's password.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.verify_reset_code_and_change_email(email, reset_code, new_email, password=None)**
+- **auth.verify_reset_code_and_change_email(email, reset_code, new_email, password=None, ignore_rate_limit=False)**
   - Changes the user's email address after verifying a reset code sent to their email. Optionally uses password verification if the user has a saved password.
   - **Parameters:**
     - `email` (`str`): User's current email address.
@@ -227,7 +231,7 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
 ### User Deletion & Blocking
 When a user is blocked, they cannot log in or perform any actions that require authentication.
 
-- **auth.delete_user(email, password, del_from_blocking=True)**
+- **auth.delete_user(email, password, del_from_blocking=True, ignore_rate_limit=False)**
   - Deletes a user from the database if credentials match. If `del_from_blocking` is `True`, also removes from the blocking database.
   - **Parameters:**
     - `email` (`str`): User's email address.
@@ -235,7 +239,7 @@ When a user is blocked, they cannot log in or perform any actions that require a
     - `del_from_blocking` (`bool`, optional): Also remove from blocking database (default: True).
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
-- **auth.delete_user_with_verif(email, password, code, del_from_blocking=True)**
+- **auth.delete_user_with_verif(email, password, code, del_from_blocking=True, ignore_rate_limit=False)**
   - Deletes a user from the database if credentials and code match. If `del_from_blocking` is `True`, also removes from the blocking database.
   - **Parameters:**
     - `email` (`str`): User's email address.
