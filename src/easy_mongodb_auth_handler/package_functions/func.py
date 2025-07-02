@@ -115,8 +115,8 @@ def send_verification_email(mail_info,
     final_body = body.replace("{verifcode}", verification_code)
 
     # Check if body contains HTML tags to determine content type
-    is_html = any(tag in final_body.lower() for 
-                  tag in ['<html>', '<body>', '<p>', '<br>', 
+    is_html = any(tag in final_body.lower() for
+                  tag in ['<html>', '<body>', '<p>', '<br>',
                           '<div>', '<span>'])
     if is_html:
         # Create multipart message for HTML content
