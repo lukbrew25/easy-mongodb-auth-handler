@@ -34,12 +34,21 @@ class Auth:
             db_name (str): Name of the database.
             mail_info (dict, optional): Email server configuration with keys:
                 'server', 'port', 'username', 'password'.
+            mail_subject (str, optional): Custom email subject template.
+                Use {verifcode} placeholder for verification code.
+                Defaults to "Verification Code".
+            mail_body (str, optional): Custom email body template.
+                Use {verifcode} placeholder for verification code.
+                Supports both plain text and HTML.
+                Defaults to "Your verification code is: {verifcode}".
             blocking (bool): Enable user blocking.
             rate_limit (int): Rate limit for user actions in seconds.
             penalty (int): Penalty time in seconds for rate limiting.
             readable_errors (bool): Use readable error messages.
             attempts (int): Number of connection attempts.
             delay (int): Delay between connection attempts in seconds.
+            timeout (int): Timeout in milliseconds for MongoDB connection.
+            certs (str): Path to CA bundle for SSL verification.
         """
         self.db = None
         self.retry_count = 0
@@ -293,7 +302,8 @@ class Auth:
                     self.blocked.insert_one({"email": email, "blocked": False})
             hashed_password = hash_password(password)
             verification_code = generate_secure_code()
-            send_verification_email(self.mail_info, email, verification_code)
+            send_verification_email(self.mail_info, email, verification_code,
+                                    self.mail_subject, self.mail_body)
             self.users.insert_one(
                 {
                     "email": email,
@@ -341,7 +351,8 @@ class Auth:
                 else:
                     self.blocked.insert_one({"email": email, "blocked": False})
             verification_code = generate_secure_code()
-            send_verification_email(self.mail_info, email, verification_code)
+            send_verification_email(self.mail_info, email, verification_code,
+                                    self.mail_subject, self.mail_body)
             self.users.insert_one(
                 {
                     "email": email,
@@ -413,7 +424,8 @@ class Auth:
                         {"email": email},
                         {"$set": {"verification_code": verification_code}}
                     )
-                    send_verification_email(self.mail_info, email, verification_code)
+                    send_verification_email(self.mail_info, email, verification_code,
+                                            self.mail_subject, self.mail_body)
                 return {"success": True, "message": self.messages["authentication_success"]}
             return {"success": False, "message": self.messages["invalid_creds"]}
         except Exception as error:
@@ -547,7 +559,8 @@ class Auth:
                 return {"success": False, "message": self.messages["rate_limited"]}
             reset_code = generate_secure_code()
             self.users.update_one({"email": email}, {"$set": {"verification_code": reset_code}})
-            send_verification_email(self.mail_info, email, reset_code)
+            send_verification_email(self.mail_info, email, reset_code,
+                                    self.mail_subject, self.mail_body)
             return {"success": True, "message": self.messages["verification_code_sent"]}
         except Exception as error:
             return {"success": False, "message": str(error)}

@@ -6,6 +6,7 @@ import secrets
 import re
 import smtplib
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import bcrypt
 
 
@@ -79,7 +80,9 @@ def validate_email(email):
     return re.match(email_regex, email) is not None
 
 
-def send_verification_email(mail_info, recipient_email, verification_code):
+def send_verification_email(mail_info,
+                            recipient_email, verification_code,
+                            subject=None, body=None):
     """
     sends a verification email with a specified code to the recipient
 
@@ -87,6 +90,8 @@ def send_verification_email(mail_info, recipient_email, verification_code):
         mail_info (dict): The server address, port, email address, and password.
         recipient_email (str): The recipient's email address.
         verification_code (str): The verification code to send.
+        subject (str, optional): Custom email subject. Uses default if None.
+        body (str, optional): Custom email body. Uses default if None.
 
     Raises:
         ValueError: If mail server settings are incomplete.
@@ -99,12 +104,44 @@ def send_verification_email(mail_info, recipient_email, verification_code):
     if not all([mail_server, mail_port, mail_username, mail_password]):
         raise ValueError("Mail server settings are incomplete or missing.")
 
-    subject = "Your Verification Code"
-    body = f"Your verification code is: {verification_code}"
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = mail_username
-    msg["To"] = recipient_email
+    # Use default values if custom ones are not provided
+    if subject is None:
+        subject = "Verification Code"
+    if body is None:
+        body = "Your verification code is: {verifcode}"
+
+    # Replace verification code placeholder in both subject and body
+    final_subject = subject.replace("{verifcode}", verification_code)
+    final_body = body.replace("{verifcode}", verification_code)
+
+    # Check if body contains HTML tags to determine content type
+    is_html = any(tag in final_body.lower() for
+                  tag in ['<html>', '<body>', '<p>', '<br>',
+                          '<div>', '<span>'])
+    if is_html:
+        # Create multipart message for HTML content
+        msg = MIMEMultipart('alternative')
+        msg["Subject"] = final_subject
+        msg["From"] = mail_username
+        msg["To"] = recipient_email
+
+        # Create plain text version by removing HTML tags (simple approach)
+        plain_text = re.sub(r'<[^>]+>', '', final_body)
+        plain_text = re.sub(r'\s+', ' ', plain_text).strip()
+
+        # Create the text and HTML parts
+        text_part = MIMEText(plain_text, 'plain')
+        html_part = MIMEText(final_body, 'html')
+
+        # Add parts to message
+        msg.attach(text_part)
+        msg.attach(html_part)
+    else:
+        # Simple text message
+        msg = MIMEText(final_body)
+        msg["Subject"] = final_subject
+        msg["From"] = mail_username
+        msg["To"] = recipient_email
 
     try:
         with smtplib.SMTP(mail_server, mail_port) as server:

@@ -79,6 +79,8 @@ auth = Auth(
         "username": "your_email@example.com",
         "password": "your_email_password"
     }, # Optional: Include if using email verification
+    mail_subject="Verification Code", # Optional: Custom subject for verification codes
+    mail_body="Your verification code is: {verifcode}", # Optional: Custom email body for verification codes. The text verifcode in brackets is replaced with the code. Use HTML or plain text.
     blocking=True/False,  # Optional: True to enable user blocking
     rate_limiting=0, # Optional: Set to 0 to disable rate limiting, or a positive integer to enable rate limiting with that cooldown period in seconds between user requests.
     penalty=0,  # Optional: Set to 0 to disable rate limiting penalty, or a positive integer to set the penalty in seconds for rate limiting. If rate limiting is enabled, this is the penalty in seconds added to the cooldown period for violating the cooldown.
