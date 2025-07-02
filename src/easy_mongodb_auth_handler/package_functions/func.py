@@ -80,7 +80,8 @@ def validate_email(email):
     return re.match(email_regex, email) is not None
 
 
-def send_verification_email(mail_info, recipient_email, verification_code,
+def send_verification_email(mail_info, 
+                            recipient_email, verification_code,
                             subject=None, body=None):
     """
     sends a verification email with a specified code to the recipient
