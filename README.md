@@ -115,7 +115,7 @@ The `blocking` argument is optional and defaults to `True`. If set to `True`, it
 The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request).
 Both blocking and rate limiting are optional and only affect functions in the Auth module.
 The data can be easily accessed externally by connecting to the same mongodb instance, navigating to the database passed to the `db_name` argument, and then accessing the `users`, `blocked`, and `limit` collections.
-All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format) EXCEPT for the CoreDB methods, which have no returns.:
+All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format) EXCEPT for the CoreDB methods, which have no returns or returns of data.:
 {
     "success": True/False, 
     "message": "specific message or error code"
@@ -356,6 +356,25 @@ BE CAREFUL when using these functions, as they WILL delete data permanently.
 
 - **coredb.reset_db()**
   - Resets the database by deleting it, re-creating it, and creating all three collections.
+
+### Statistic Functions
+It is still recommended to run these functions in a try except block to handle any exceptions.
+These functions dump MongoDB statistics and return the results.
+
+- **coredb.user_count()**
+  - Returns the number of users in the `users` collection as int.
+
+- **coredb.db_data_size()**
+  - Returns the size of the database in bytes as int.
+
+- **coredb.db_storage_size()**
+  - Returns the storage size of the database in bytes as int.
+
+- **coredb.db_index_size()**
+  - Returns the size of the indexes in the database in bytes as int.
+
+- **coredb.db_raw_stats()**
+  - Returns the raw database statistics as a dictionary.
 
 ## Requirements
 

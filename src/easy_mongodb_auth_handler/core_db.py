@@ -163,3 +163,48 @@ class CoreDB:
         self.remove_db()
         self.create_db()
         self.create_all_collections()
+
+    def user_count(self):
+        """
+        Returns the count of users in the users collection.
+
+        Returns:
+            int: Number of users in the users collection.
+        """
+        return int(self.users.count_documents({}))
+
+    def db_data_size(self):
+        """
+        Returns the size of the database in bytes.
+
+        Returns:
+            int: Size of the database in bytes.
+        """
+        return int(self.db.command("dbStats")["dataSize"])
+
+    def db_storage_size(self):
+        """
+        Returns the total storage size of the database in bytes.
+
+        Returns:
+            int: Total storage size of the database in bytes.
+        """
+        return int(self.db.command("dbStats")["storageSize"])
+
+    def db_index_size(self):
+        """
+        Returns the size of the indexes in the database in bytes.
+
+        Returns:
+            int: Size of the indexes in bytes.
+        """
+        return int(self.db.command("dbStats")["indexSize"])
+
+    def db_raw_stats(self):
+        """
+        Returns raw statistics of the database.
+
+        Returns:
+            dict: Raw statistics of the database.
+        """
+        return self.db.command("dbStats")
