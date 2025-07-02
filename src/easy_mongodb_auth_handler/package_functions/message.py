@@ -1,5 +1,5 @@
 """
-    Return message dictionary.
+Return message dictionary.
 """
 
 
