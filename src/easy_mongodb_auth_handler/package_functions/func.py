@@ -53,12 +53,12 @@ def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
-def generate_secure_code(length=6):
+def generate_secure_code(length):
     """
     Generates a secure alphanumeric code.
 
     Args:
-        length (int): The length of the code. Default is 6.
+        length (int): The length of the code.
 
     Returns:
         str: The generated code.

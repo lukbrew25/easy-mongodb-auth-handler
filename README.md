@@ -83,11 +83,12 @@ auth = Auth(
     mail_body="Your verification code is: {verifcode}", # Optional: Custom email body for verification codes. The text "{verifcode}" is replaced with the verification code. Use HTML or plain text in the template. It is recommended to read the template from a file and pass it here.
     blocking=True/False,  # Optional: True to enable user blocking
     rate_limiting=0, # Optional: Set to 0 to disable rate limiting, or a positive integer to enable rate limiting with that cooldown period in seconds between user requests.
-    penalty=0,  # Optional: Set to 0 to disable rate limiting penalty, or a positive integer to set the penalty in seconds for rate limiting. If rate limiting is enabled, this is the penalty in seconds added to the cooldown period for violating the cooldown.
+    rate_limit_penalty=0,  # Optional: Set to 0 to disable rate limiting penalty, or a positive integer to set the penalty in seconds for rate limiting. If rate limiting is enabled, this is the penalty in seconds added to the cooldown period for violating the cooldown. Requires `rate_limiting` to be set to a positive integer.
     readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
-    attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
-    delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
-    timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
+    code_length=6,  # Optional: Length of the numeric verification code (default is 6 characters).
+    db_attempts=6,  # Optional: Number of attempts to initially connect to MongoDB (default is 6).
+    db_delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
+    db_timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
     certs=certifi.where()  # Optional: Path to CA bundle for SSL verification (default is certifi's CA bundle)
 )
 
@@ -115,7 +116,7 @@ This code initializes the modules. The Auth module is used for most functions. T
 The mail arguments are not required but needed to use verification code functionality. 
 Each module can be initialized separately if you only need specific functionalities of one or two module(s). Make sure to use the same mongo uri and db name for all modules.
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
-The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request).
+The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request). rate_limit_penalty can be used to add a stackable cooldown penalty to the timer per user.
 The mail subject and body arguments can be customized using your own templates. Be sure to include the `{verifcode}` placeholder in the body, as it will be replaced with the actual verification code sent to the user.
 Both HTML and plain text formats are supported for the email body. It is recommended to read the email body from a file and pass it to the `mail_body` argument.
 Both blocking and rate limiting are optional and only affect functions in the Auth module.
@@ -169,14 +170,14 @@ All functions return a dictionary: `{"success": True/False, "message": "specific
   - **Parameters:**
     - `email` (`str`): User's email address.
     - `password` (`str`): User's password.
-    - `mfa` (`bool`, optional): If set to `True`, it will send the user a six-digit code to their email for multi-factor authentication. Defaults to `False`.
+    - `mfa` (`bool`, optional): If set to `True`, it will send the user a numeric code to their email for multi-factor authentication. Defaults to `False`.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 - **auth.verify_mfa_code(email, code)**
   - Verifies the multi-factor authentication code sent to the user's email. Can be used in conjunction with register_user_no_pass(), verify_user(), and generate_code() for passwordless sign-in.
   - **Parameters:**
     - `email` (`str`): User's email address.
-    - `code` (`str`): Six-digit code sent to the user's email.
+    - `code` (`str`): Numeric code sent to the user's email.
     - `ignore_rate_limit` (`bool`, optional): If set to `True`, it will skip the rate limit checking and updating for this request. Defaults to `False`.
 
 ### MFA Code Management

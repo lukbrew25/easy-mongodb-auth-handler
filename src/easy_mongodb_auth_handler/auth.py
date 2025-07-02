@@ -23,8 +23,8 @@ class Auth:
     def __init__(self, mongo_uri, db_name, mail_info=None,
                  mail_subject="Verification Code",
                  mail_body="Your verification code is: {verifcode}",
-                 blocking=True, rate_limit=0, penalty=0, readable_errors=True,
-                 attempts=6, delay=10, timeout=5000,
+                 blocking=True, rate_limit=0, rate_limit_penalty=0, readable_errors=True,
+                 code_length=6, db_attempts=6, db_delay=10, db_timeout=5000,
                  certs=certifi.where()):
         """
         initializes the Auth class
@@ -43,30 +43,32 @@ class Auth:
                 Defaults to "Your verification code is: {verifcode}".
             blocking (bool): Enable user blocking.
             rate_limit (int): Rate limit for user actions in seconds.
-            penalty (int): Penalty time in seconds for rate limiting.
+            rate_limit_penalty (int): Penalty time in seconds for rate limiting.
             readable_errors (bool): Use readable error messages.
-            attempts (int): Number of connection attempts.
-            delay (int): Delay between connection attempts in seconds.
-            timeout (int): Timeout in milliseconds for MongoDB connection.
+            code_length (int): Length of the verification code.
+                Defaults to 6.
+            db_attempts (int): Number of connection attempts.
+            db_delay (int): Delay between connection attempts in seconds.
+            db_timeout (int): Timeout in milliseconds for MongoDB connection.
             certs (str): Path to CA bundle for SSL verification.
         """
         self.db = None
         self.retry_count = 0
-        if attempts < 1:
+        if db_attempts < 1:
             raise ValueError("Number of attempts must be at least 1.")
-        if delay < 0:
+        if db_delay < 0:
             raise ValueError("Delay must be a non-negative integer.")
-        self.max_retries = attempts
+        self.max_retries = db_attempts
         while self.db is None and self.retry_count < self.max_retries:
             try:
                 self.client = MongoClient(mongo_uri,
-                                          serverSelectionTimeoutMS=timeout,
+                                          serverSelectionTimeoutMS=db_timeout,
                                           tlsCAFile=certs
                                           )
                 self.db = self.client[db_name]
             except Exception:
                 self.retry_count += 1
-                time.sleep(delay)
+                time.sleep(db_delay)
         if self.db is None:
             raise Exception('Could not connect to MongoDB instance.')
         self.users = self.db["users"]
@@ -85,9 +87,10 @@ class Auth:
         self.blocking = blocking
         self.rate_limit = rate_limit
         self.messages = get_messages(readable_errors)
-        self.penalty = penalty
+        self.penalty = rate_limit_penalty
         self.mail_subject = mail_subject
         self.mail_body = mail_body
+        self.code_length = code_length
 
     def __del__(self):
         """
@@ -175,7 +178,7 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             custom_data: Custom data to save with the user.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -219,7 +222,7 @@ class Auth:
             email (str): User's email address.
             old_password (str): User's current password.
             new_password (str): New password.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -247,7 +250,7 @@ class Auth:
             email (str): User's email address.
             new_email (str): User's new email.
             password (str): password.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -268,7 +271,7 @@ class Auth:
             return {"success": False, "message": str(error)}
 
     def register_user(self, email, password, custom_data=None,
-                      ignore_rate_limit=False):
+                      cust_length=None, ignore_rate_limit=False):
         """
         registers a user with email verification
 
@@ -276,7 +279,8 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             custom_data: Custom data to save with the user.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            cust_length (int, optional): Custom length for the verification code.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -301,7 +305,11 @@ class Auth:
                 else:
                     self.blocked.insert_one({"email": email, "blocked": False})
             hashed_password = hash_password(password)
-            verification_code = generate_secure_code()
+            if cust_length:
+                length = int(cust_length)
+            else:
+                length = self.code_length
+            verification_code = generate_secure_code(length)
             send_verification_email(self.mail_info, email, verification_code,
                                     self.mail_subject, self.mail_body)
             self.users.insert_one(
@@ -319,14 +327,15 @@ class Auth:
             return {"success": False, "message": str(error)}
 
     def register_user_no_pass(self, email, custom_data=None,
-                              ignore_rate_limit=False):
+                              cust_length=None, ignore_rate_limit=False):
         """
         registers a user without password and instead uses email verification.
 
         Args:
             email (str): User's email address.
             custom_data: Custom data to save with the user.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            cust_length (int, optional): Custom length for the verification code.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -350,7 +359,11 @@ class Auth:
                         return {"success": False, "message": self.messages["user_blocked"]}
                 else:
                     self.blocked.insert_one({"email": email, "blocked": False})
-            verification_code = generate_secure_code()
+            if cust_length:
+                length = int(cust_length)
+            else:
+                length = self.code_length
+            verification_code = generate_secure_code(length)
             send_verification_email(self.mail_info, email, verification_code,
                                     self.mail_subject, self.mail_body)
             self.users.insert_one(
@@ -374,7 +387,7 @@ class Auth:
         Args:
             email (str): User's email address.
             code (str): Verification code.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -395,7 +408,7 @@ class Auth:
             return {"success": False, "message": str(error)}
 
     def authenticate_user(self, email, password, mfa=False,
-                          ignore_rate_limit=False):
+                          cust_length=None, ignore_rate_limit=False):
         """
         authenticates a user
 
@@ -403,7 +416,8 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             mfa (bool): Enable multi-factor authentication.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            cust_length (int, optional): Custom length for the verification code.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -419,7 +433,11 @@ class Auth:
                 return {"success": False, "message": self.messages["rate_limited"]}
             if check_password(user, password):
                 if mfa:
-                    verification_code = generate_secure_code()
+                    if cust_length:
+                        length = int(cust_length)
+                    else:
+                        length = self.code_length
+                    verification_code = generate_secure_code(length)
                     self.users.find_one_and_update(
                         {"email": email},
                         {"$set": {"verification_code": verification_code}}
@@ -438,7 +456,7 @@ class Auth:
         Args:
             email (str): User's email address.
             code (str): MFA code.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -464,8 +482,8 @@ class Auth:
         Args:
             email (str): User's email address.
             password (str): User's password.
-            del_from_blocking (bool): Delete the user from the blocked database.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            del_from_blocking (bool, optional): Delete the user from the blocked database.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -505,8 +523,8 @@ class Auth:
             email (str): User's email address.
             password (str): User's password.
             code (str): Verification code.
-            del_from_blocking (bool): Delete the user from the blocked database.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            del_from_blocking (bool, optional): Delete the user from the blocked database.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -538,13 +556,14 @@ class Auth:
         except Exception as error:
             return {"success": False, "message": str(error)}
 
-    def generate_code(self, email, ignore_rate_limit=False):
+    def generate_code(self, email, cust_length=None, ignore_rate_limit=False):
         """
         Generates a code and sends it to the user's email.
 
         Args:
             email (str): User's email address.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            cust_length (int, optional): Custom length for the verification code.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -557,7 +576,11 @@ class Auth:
                 return {"success": False, "message": self.messages["user_not_found"]}
             if self._rate_limit_checker(email, ignore_rate_limit):
                 return {"success": False, "message": self.messages["rate_limited"]}
-            reset_code = generate_secure_code()
+            if cust_length:
+                length = int(cust_length)
+            else:
+                length = self.code_length
+            reset_code = generate_secure_code(length)
             self.users.update_one({"email": email}, {"$set": {"verification_code": reset_code}})
             send_verification_email(self.mail_info, email, reset_code,
                                     self.mail_subject, self.mail_body)
@@ -574,7 +597,7 @@ class Auth:
             email (str): User's email address.
             reset_code (str): Reset code.
             new_password (str): New password.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
@@ -605,7 +628,7 @@ class Auth:
             reset_code (str): Reset code.
             new_email (str): New email address.
             password (str, optional): User's password for verification if included.
-            ignore_rate_limit (bool): Ignore rate limiting for this action.
+            ignore_rate_limit (bool, optional): Ignore rate limiting for this action.
 
         Returns:
             dict: Success status and message.
