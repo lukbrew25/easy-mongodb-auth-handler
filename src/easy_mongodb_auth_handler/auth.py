@@ -21,6 +21,8 @@ class Auth:
     """
 
     def __init__(self, mongo_uri, db_name, mail_info=None,
+                 mail_subject="Verification Code",
+                 mail_body="Your verification code is: {verifcode}",
                  blocking=True, rate_limit=0, penalty=0, readable_errors=True,
                  attempts=6, delay=10, timeout=5000,
                  certs=certifi.where()):
@@ -75,6 +77,8 @@ class Auth:
         self.rate_limit = rate_limit
         self.messages = get_messages(readable_errors)
         self.penalty = penalty
+        self.mail_subject = mail_subject
+        self.mail_body = mail_body
 
     def __del__(self):
         """
