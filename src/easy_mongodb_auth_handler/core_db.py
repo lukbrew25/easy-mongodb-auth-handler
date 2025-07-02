@@ -1,5 +1,6 @@
 """
-This module provides the CoreDB class for managing MongoDB connections, collections, and the database.
+This module provides the CoreDB class for
+- managing MongoDB connections, collections, and the database.
 """
 
 import time
