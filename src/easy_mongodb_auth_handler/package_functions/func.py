@@ -104,13 +104,11 @@ def send_verification_email(mail_info,
     if not all([mail_server, mail_port, mail_username, mail_password]):
         raise ValueError("Mail server settings are incomplete or missing.")
 
-    # Use default values if custom ones are not provided
     if subject is None:
         subject = "Verification Code"
     if body is None:
         body = "Your verification code is: {verifcode}"
 
-    # Replace verification code placeholder in both subject and body
     final_subject = subject.replace("{verifcode}", verification_code)
     final_body = body.replace("{verifcode}", verification_code)
 
@@ -119,7 +117,6 @@ def send_verification_email(mail_info,
                   tag in ['<html>', '<body>', '<p>', '<br>',
                           '<div>', '<span>'])
     if is_html:
-        # Create multipart message for HTML content
         msg = MIMEMultipart('alternative')
         msg["Subject"] = final_subject
         msg["From"] = mail_username

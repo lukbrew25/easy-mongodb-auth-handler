@@ -80,7 +80,7 @@ auth = Auth(
         "password": "your_email_password"
     }, # Optional: Include if using email verification
     mail_subject="Verification Code", # Optional: Custom subject for verification codes
-    mail_body="Your verification code is: {verifcode}", # Optional: Custom email body for verification codes. The text verifcode in brackets is replaced with the code. Use HTML or plain text.
+    mail_body="Your verification code is: {verifcode}", # Optional: Custom email body for verification codes. The text "{verifcode}" is replaced with the verification code. Use HTML or plain text in the template. It is recommended to read the template from a file and pass it here.
     blocking=True/False,  # Optional: True to enable user blocking
     rate_limiting=0, # Optional: Set to 0 to disable rate limiting, or a positive integer to enable rate limiting with that cooldown period in seconds between user requests.
     penalty=0,  # Optional: Set to 0 to disable rate limiting penalty, or a positive integer to set the penalty in seconds for rate limiting. If rate limiting is enabled, this is the penalty in seconds added to the cooldown period for violating the cooldown.
@@ -116,6 +116,8 @@ The mail arguments are not required but needed to use verification code function
 Each module can be initialized separately if you only need specific functionalities of one or two module(s). Make sure to use the same mongo uri and db name for all modules.
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
 The `rate_limiting` argument is optional and defaults to `0`, which disables rate limiting. If configured with x number of seconds, it will refuse more than two requests per email address in that time period (timer reset upon successful or unsuccessful request).
+The mail subject and body arguments can be customized using your own templates. Be sure to include the `{verifcode}` placeholder in the body, as it will be replaced with the actual verification code sent to the user.
+Both HTML and plain text formats are supported for the email body. It is recommended to read the email body from a file and pass it to the `mail_body` argument.
 Both blocking and rate limiting are optional and only affect functions in the Auth module.
 The data can be easily accessed externally by connecting to the same mongodb instance, navigating to the database passed to the `db_name` argument, and then accessing the `users`, `blocked`, and `limit` collections.
 All methods return True or False (unless the method is meant to return data) with additional detailed outcome reports (as in the following format) EXCEPT for the CoreDB methods, which have no returns or returns of data.:
