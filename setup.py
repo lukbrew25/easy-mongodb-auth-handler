@@ -11,9 +11,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="easy_mongodb_auth_handler",
-    version="2.1.0",
+    version="2.1.1",
     description="A user authentication and verification system using MongoDB.",
     author="Lukbrew25",
+    license='MIT',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/lukbrew25/easy-mongodb-auth-handler/",
@@ -29,7 +30,7 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Internet",
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU Affero General Public License v3",
+        'License :: OSI Approved :: MIT License',
         "Operating System :: OS Independent"
     ],
     python_requires=">=3.8",
