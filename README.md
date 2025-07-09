@@ -22,8 +22,8 @@ easy_mongodb_auth_handler/
 │       ├── minlinter.yml
 │       └── python-package.yml
 |── dist/
-|   ├── easy_mongodb_auth_handler-2.1.0-py3-none-any.whl
-|   └── easy_mongodb_auth_handler-2.1.0.tar.gz
+|   ├── easy_mongodb_auth_handler-2.1.1-py3-none-any.whl
+|   └── easy_mongodb_auth_handler-2.1.1.tar.gz
 ├── src/
 │   ├── .gitignore
 │   └── easy_mongodb_auth_handler/
