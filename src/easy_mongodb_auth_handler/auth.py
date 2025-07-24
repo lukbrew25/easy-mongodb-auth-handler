@@ -71,7 +71,7 @@ class Auth:
                                      "Verification Code")
             mail_body = os.getenv("MAIL_BODY",
                                   "Your verification code is: {verifcode}")
-            blocking= bool(os.getenv("BLOCKING", True))
+            blocking= bool(os.getenv("BLOCKING", "True"))
             rate_limit = int(os.getenv("RATE_LIMIT", "0"))
             rate_limit_penalty = int(os.getenv("RATE_LIMIT_PENALTY", "0"))
             readable_errors = bool(os.getenv("READABLE_ERRORS"))
