@@ -10,6 +10,15 @@ from email.mime.multipart import MIMEMultipart
 import bcrypt
 
 
+def get_version():
+    """
+    Returns the version of the easy_mongodb_auth_handler package.
+
+    Returns:
+        str: The version of the package.
+    """
+    return "3.0.0"
+
 def check_password(user, password):
     """
     Helper to verify a user's password.
