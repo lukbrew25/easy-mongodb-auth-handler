@@ -19,6 +19,7 @@ def get_version():
     """
     return "3.0.0"
 
+
 def check_password(user, password):
     """
     Helper to verify a user's password.
