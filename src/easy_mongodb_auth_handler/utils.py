@@ -3,8 +3,10 @@ This module provides utility functions for managing user accounts in a MongoDB d
 """
 
 import time
+import os
 from pymongo import MongoClient
 import certifi
+from dotenv import load_dotenv
 from .package_functions.message import get_messages
 
 
@@ -14,8 +16,9 @@ class Utils:
     - statuses and data in a MongoDB database.
     """
 
-    def __init__(self, mongo_uri, db_name, readable_errors,
-                 attempts=6, delay=10, timeout=5000,
+    def __init__(self, conf_file=None, mongo_uri=None,
+                 db_name=None, readable_errors=True,
+                 db_attempts=6, db_delay=10, db_timeout=5000,
                  certs=certifi.where()):
         """
         Initializes the Utils class to connect to a MongoDB instance.
@@ -23,32 +26,50 @@ class Utils:
         unblocking, and checking user status.
 
         Args:
-            mongo_uri (str): MongoDB connection URI.
-            db_name (str): Name of the database to connect to.
-            readable_errors (bool): If True, returns user-friendly error messages.
-            attempts (int): Number of connection attempts before giving up.
-            delay (int): Delay in seconds between connection attempts.
-            timeout (int): Timeout for server selection in milliseconds.
-            certs (str): Path to the CA certificates file for TLS connections.
+            conf_file (str, optional): Path to a .env configuration file.
+            mongo_uri (str, optional): MongoDB connection URI.
+            db_name (str, optional): Name of the database to connect to.
+            readable_errors (bool, optional): If True, returns user-friendly error messages.
+            db_attempts (int, optional): Number of connection attempts before giving up.
+            db_delay (int, optional): Delay in seconds between connection attempts.
+            db_timeout (int, optional): Timeout for server selection in milliseconds.
+            certs (str, optional): Path to the CA certificates file for TLS connections.
 
         """
+        if not mongo_uri or not db_name:
+            if conf_file:
+                load_dotenv(conf_file)
+            elif os.path.exists(".emdb_utils"):
+                load_dotenv(".emdb_utils")
+            else:
+                raise ValueError("Missing info and configuration "
+                                 "file not found or not provided.")
+            mongo_uri = os.getenv("MONGO_URI", None)
+            db_name = os.getenv("DB_NAME", None)
+            readable_errors = bool(os.getenv("READABLE_ERRORS"))
+            db_attempts = int(os.getenv("DB_ATTEMPTS", "1"))
+            db_delay = int(os.getenv("DB_DELAY", "10"))
+            db_timeout = int(os.getenv("DB_TIMEOUT", "5000"))
+            certs = os.getenv("CERTS", certifi.where())
+        if not mongo_uri or not db_name:
+            raise ValueError("MongoDB URI and DB name must be provided.")
         self.db = None
         self.retry_count = 0
-        if attempts < 1:
+        if db_attempts < 1:
             raise ValueError("Number of attempts must be at least 1.")
-        if delay < 0:
+        if db_delay < 0:
             raise ValueError("Delay must be a non-negative integer.")
-        self.max_retries = attempts
+        self.max_retries = db_attempts
         while self.db is None and self.retry_count < self.max_retries:
             try:
                 self.client = MongoClient(mongo_uri,
-                                          serverSelectionTimeoutMS=timeout,
+                                          serverSelectionTimeoutMS=db_timeout,
                                           tlsCAFile=certs
                                           )
                 self.db = self.client[db_name]
             except Exception:
                 self.retry_count += 1
-                time.sleep(delay)
+                time.sleep(db_delay)
         if self.db is None:
             raise Exception('Could not connect to MongoDB instance.')
         self.users = self.db["users"]

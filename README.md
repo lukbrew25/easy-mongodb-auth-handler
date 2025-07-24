@@ -22,8 +22,8 @@ easy_mongodb_auth_handler/
 │       ├── minlinter.yml
 │       └── python-package.yml
 |── dist/
-|   ├── easy_mongodb_auth_handler-2.1.1-py3-none-any.whl
-|   └── easy_mongodb_auth_handler-2.1.1.tar.gz
+|   ├── easy_mongodb_auth_handler-3.0.0-py3-none-any.whl
+|   └── easy_mongodb_auth_handler-3.0.0.tar.gz
 ├── src/
 │   ├── .gitignore
 │   └── easy_mongodb_auth_handler/
@@ -64,15 +64,27 @@ easy_mongodb_auth_handler/
 - Utility functions for user status management and data retrieval
 - Detailed error handling with readable messages or numeric codes
 - Support for custom user data storage in a flexible format
+- Support for both HTML and plain text email templates
+- Support for configuration files
 
 ## Usage
+Each class has the argument for a configuration file, which is optional. 
+If you pass any arguments other than the configuration file, the file will be ignored. Then, you must provide all necessary arguments directly to the class constructor.
+If you only pass the configuration file, it will be read and used to set the arguments for the class. The configuration file should be in the same format as the examples below.
+If you do not pass any arguments, the class will search for a file in the current directory with the matching name:
+.emdb_auth for the Auth class, 
+.emdb_utils for the Utils class, 
+.emdb_coredb for the CoreDB class. 
+Format each file as an .env file. Examples later below.
 
 ```
 from easy_mongodb_auth_handler import Auth, Utils, CoreDB
+import easy_mongodb_auth_handler as emdb
 
 auth = Auth(
-    mongo_uri="mongodb://localhost:27017", # MongoDB URI for your database (Must match the other modules' mongo_uri if using other modules)
-    db_name="auth", # Database name for user data (Must match the other modules' db_name if using other modules)
+    conf_file=".emdb_auth",  # See above: Path to a configuration file for the module - skip if directly passing arguments.
+    mongo_uri="mongodb://localhost:27017", # See above: MongoDB URI for your database (Must match the other modules' mongo_uri if using other modules)
+    db_name="auth", # See above: Database name for user data (Must match the other modules' db_name if using other modules)
     mail_info={
         "server": "smtp.example.com",
         "port": 587,
@@ -93,26 +105,29 @@ auth = Auth(
 )
 
 utils = Utils(
-    mongo_uri="mongodb://localhost:27017", # Must match the Auth module's mongo_uri
-    db_name="auth", # Must match the Auth module's db_name
-    attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
+    conf_file=".emdb_utils",  # See above: Path to a configuration file for the module.
+    mongo_uri="mongodb://localhost:27017", # See above: Must match the Auth module's mongo_uri
+    db_name="auth", # See above: Must match the Auth module's db_name
+    db_attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
     readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
-    delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
-    timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
+    db_delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
+    db_timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
     certs=certifi.where()  # Optional: Path to CA bundle for SSL verification (default is certifi's CA bundle)
 )
 
 coredb = CoreDB(
-    mongo_uri="mongodb://localhost:27017", # Must match the Auth module's mongo_uri
-    db_name="auth", # Must match the Auth module's db_name
-    attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
+    conf_file=".emdb_coredb",  # See above: Path to a configuration file for the module.
+    mongo_uri="mongodb://localhost:27017", # See above: Must match the Auth module's mongo_uri
+    db_name="auth", # See above: Must match the Auth module's db_name
+    db_attempts=6,  # Optional: Number of attempts for initial MongoDB connection (default is 6).
     readable_errors=True/False,  # Optional: False to switch to numeric error codes translated in the README.md file
-    delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
-    timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
+    db_delay=10,  # Optional: Delay in seconds between MongoDB initial connection attempts (default is 10 seconds).
+    db_timeout=5000,  # Optional: Timeout in ms for MongoDB connection (default is 5000 ms).
     certs=certifi.where()  # Optional: Path to CA bundle for SSL verification (default is certifi's CA bundle)
 )
 ```
 This code initializes the modules. The Auth module is used for most functions. The Utils module is used for utility functions that are designed for user management, data retrieval, and status checks that are not intended to directly process user input. The CoreDB module is used for direct database interactions, such as manually resetting or deleting the db and collections.
+Importing the easy_mongodb_auth_handler package directly is entirely optional and only needed if you want to use the extra functions provided, such as `get_messages()`, `generate_secure_code()`, `get_version()`, and `validate_email()`.
 The mail arguments are not required but needed to use verification code functionality. 
 Each module can be initialized separately if you only need specific functionalities of one or two module(s). Make sure to use the same mongo uri and db name for all modules.
 The `blocking` argument is optional and defaults to `True`. If set to `True`, it enables user blocking functionality.
@@ -127,7 +142,52 @@ All methods return True or False (unless the method is meant to return data) wit
     "message": "specific message or error code"
 }
 
-## Function Reference - auth.example_func(args)
+## Example (Optional) Configuration Files
+If you instantiate the classes without passing any arguments, the modules will look for configuration files in the current directory with the names `.emdb_auth`, `.emdb_utils`, and `.emdb_coredb` depending on what class you are using.
+If you pass the `conf_file` argument, the module will read the configuration from that path and file instead.
+If any arguments besides 'conf_file' are passed, the configuration file will be completely ignored, and the arguments will be used directly.
+
+### .emdb_auth
+```
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=auth
+MAIL_INFO={"server": "smtp.example.com", "port": 587, "username": "youremail@example.com", "password": "yourpassword"}
+MAIL_SUBJECT="Verification Code"
+MAIL_BODY="Your verification code is: {verifcode}"
+BLOCKING=True
+RATE_LIMITING=0
+RATE_LIMIT_PENALTY=0
+READABLE_ERRORS=True
+CODE_LENGTH=6
+DB_ATTEMPTS=6
+DB_DELAY=10
+DB_TIMEOUT=5000
+CERTS=certifi.where()
+```
+
+### .emdb_utils
+```
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=auth
+DB_ATTEMPTS=6
+DB_DELAY=10
+DB_TIMEOUT=5000
+READABLE_ERRORS=True
+CERTS=certifi.where()
+```
+
+### .emdb_coredb
+```
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=auth
+DB_ATTEMPTS=6
+DB_DELAY=10
+DB_TIMEOUT=5000
+READABLE_ERRORS=True
+CERTS=certifi.where()
+```
+
+## Function Reference - modulename.example_func(args)
 
 All functions return a dictionary: `{"success": True/False, "message": "specific message"}`.
 
@@ -410,12 +470,46 @@ These functions dump MongoDB statistics and return the results.
 - **coredb.db_raw_stats()**
   - Returns the raw database statistics as a dictionary.
 
+### Extra functions
+Requires using this import statement:
+
+```
+import easy_mongodb_auth_handler as emdb
+```
+
+- **emdb.get_messages(usr_readable)**
+  - Returns a dictionary of all messages used in the package, including error codes and user-friendly messages. Handy for using this package's error codes in your project or for translating errors.
+  - **Parameters:**
+    - `usr_readable` (`bool`): If `True`, uses user-friendly messages. If `False`, uses numeric error codes.
+  - **Returns:**
+    - `dict`: A dictionary containing all messages and error codes.
+
+- **emdb.generate_secure_code(length)**
+  - Generates a secure numeric code of the specified length.
+  - **Parameters:**
+    - `length` (`int`): Length of the code to generate.
+  - **Returns:**
+    - `str`: A string containing the generated numeric code.
+
+- **emdb.get_version()**
+  - Returns the current version of the package.
+  - **Returns:**
+    - `str`: The version number of the package.
+
+- **emdb.validate_email(email)**
+  - Validates the format of an email address.
+  - **Parameters:**
+    - `email` (`str`): The email address to validate.
+  - **Returns:**
+    - `bool`: `True` if the email format is valid, `False` otherwise.
+
 ## Requirements
 
 - Python >= 3.8
 - bcrypt >= 4.0.0
-- pymongo >= 4.0.0
 - certifi >= 2025.6.15
+- python_dotenv >= 1.1.1
+- pymongo >= 4.0.0
 
 ## Return code translation
 These codes are returned by the functions in the package if `readable_errors` is set to `False`.

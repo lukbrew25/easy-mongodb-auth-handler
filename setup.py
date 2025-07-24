@@ -11,7 +11,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="easy_mongodb_auth_handler",
-    version="2.1.1",
+    version="3.0.0",
     description="A user authentication and verification system using MongoDB.",
     author="Lukbrew25",
     license='MIT',
@@ -23,7 +23,8 @@ setup(
     install_requires=[
         "bcrypt>=4.0.0",
         "certifi>=2025.6.15",
-        "pymongo>=4.6.3"
+        "pymongo>=4.6.3",
+        "python-dotenv>=1.1.1"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

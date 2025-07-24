@@ -3,8 +3,10 @@ Authentication and user management for the easy_mongodb_auth_handler package.
 """
 
 import time
+import os
 from pymongo import MongoClient
 import certifi
+from dotenv import load_dotenv
 from .package_functions.func import (
     validate_email,
     hash_password,
@@ -20,7 +22,8 @@ class Auth:
     Handles user authentication and management using MongoDB.
     """
 
-    def __init__(self, mongo_uri, db_name, mail_info=None,
+    def __init__(self, conf_file=None, mongo_uri=None, db_name=None,
+                 mail_info=None,
                  mail_subject="Verification Code",
                  mail_body="Your verification code is: {verifcode}",
                  blocking=True, rate_limit=0, rate_limit_penalty=0, readable_errors=True,
@@ -30,8 +33,9 @@ class Auth:
         initializes the Auth class
 
         Args:
-            mongo_uri (str): MongoDB connection URI.
-            db_name (str): Name of the database.
+            conf_file (str, optional): Path to a .env configuration file.
+            mongo_uri (str, optional): MongoDB connection URI.
+            db_name (str, optional): Name of the database.
             mail_info (dict, optional): Email server configuration with keys:
                 'server', 'port', 'username', 'password'.
             mail_subject (str, optional): Custom email subject template.
@@ -52,6 +56,32 @@ class Auth:
             db_timeout (int): Timeout in milliseconds for MongoDB connection.
             certs (str): Path to CA bundle for SSL verification.
         """
+        if not mongo_uri or not db_name:
+            if conf_file:
+                load_dotenv(conf_file)
+            elif os.path.exists(".emdb_auth"):
+                load_dotenv(".emdb_auth")
+            else:
+                raise ValueError("Missing info and configuration "
+                                 "file not found or not provided.")
+            mongo_uri = os.getenv("MONGO_URI", None)
+            db_name = os.getenv("DB_NAME", None)
+            mail_info = os.getenv("MAIL_INFO", None)
+            mail_subject = os.getenv("MAIL_SUBJECT",
+                                     "Verification Code")
+            mail_body = os.getenv("MAIL_BODY",
+                                  "Your verification code is: {verifcode}")
+            blocking= bool(os.getenv("BLOCKING", True))
+            rate_limit = int(os.getenv("RATE_LIMIT", "0"))
+            rate_limit_penalty = int(os.getenv("RATE_LIMIT_PENALTY", "0"))
+            readable_errors = bool(os.getenv("READABLE_ERRORS"))
+            code_length = int(os.getenv("CODE_LENGTH", "6"))
+            db_attempts = int(os.getenv("DB_ATTEMPTS", "1"))
+            db_delay = int(os.getenv("DB_DELAY", "10"))
+            db_timeout = int(os.getenv("DB_TIMEOUT", "5000"))
+            certs = os.getenv("CERTS", certifi.where())
+        if not mongo_uri or not db_name:
+            raise ValueError("MongoDB URI and DB name must be provided.")
         self.db = None
         self.retry_count = 0
         if db_attempts < 1:
