@@ -505,7 +505,7 @@ import easy_mongodb_auth_handler as emdb
 
 ## Requirements
 
-- Python >= 3.8
+- Python >= 3.9
 - bcrypt >= 4.0.0
 - certifi >= 2025.6.15
 - python_dotenv >= 1.1.1
