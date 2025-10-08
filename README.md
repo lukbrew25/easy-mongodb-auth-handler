@@ -503,6 +503,29 @@ import easy_mongodb_auth_handler as emdb
   - **Returns:**
     - `bool`: `True` if the email format is valid, `False` otherwise.
 
+- **emdb.hash_password(password)**
+  - Hashes a password.
+  - **Parameters:**
+    - `password` (`str`): The password to hash.
+  - **Returns:**
+    - `str`: The hashed password.
+
+- **emdb.check_password(user, password)**
+  - Checks a un-hashed password against the hashed password stored in the user document.
+  - **Parameters:**
+    - `user` (`dict`): The user document to authenticate.
+    - `password` (`str`): The un-hashed password to check against the user document.
+  - **Returns:**
+    - `bool`: `True` if the passwords match and `False` otherwise.
+
+- **emdb.verify_password(password, hashed)**
+  - Checks a un-hashed password against the hashed password passed as a parameter.
+  - **Parameters:**
+    - `password` (`dict`): The un-hashed password to check.
+    - `hashed` (`str`): The hashed password to check.
+  - **Returns:**
+    - `bool`: `True` if the passwords match and `False` otherwise.
+
 ## Requirements
 
 - Python >= 3.9
